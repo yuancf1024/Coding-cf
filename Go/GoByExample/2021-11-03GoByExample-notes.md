@@ -6,7 +6,7 @@
 
 - [x] 2021-11-03 1-Hello World
 - [x] 2021-11-04 中午2+3
-- [ ] 
+- [ ] 2021-11-06 4~20
 
 ## Readme
 
@@ -134,11 +134,154 @@ short
 
 ## 4-常量
 
+Go 支持字符、字符串、布尔和数值 **常量** 。
+
+```go
+package main
+
+import (
+	"fmt"
+	"math"
+)
+
+// `const`用于声明一个常量。
+const s string = "constant"
+
+func main() {
+	fmt.Println(s)
+
+	// `const`语句可以出现在任何var语句可以出现的地方
+	const n = 500000000
+
+	// 常数表达式可以执行任意精度的运算
+	const d = 3e20 / n
+	fmt.Println(d)
+
+	// 数值型常量没有确定的类型，直到被给定某个类型，比如显式类型转化。
+	fmt.Println(int64(d))
+
+	// 一个数字可以根据上下文的需要（比如变量赋值、函数调用）自动确定类型。 
+	// 举个例子，这里的 math.Sin 函数需要一个 float64 的参数，n 会自动确定类型。
+	fmt.Println(math.Sin(n))
+}
+```
+
+PS C:\Users\chenfengyuan\Coding-cf> go run "c:\Users\chenfengyuan\Coding-cf\Go\GoByExample\constant\constant.go"        
+constant
+6e+11
+600000000000
+-0.28470407323754404
+
 ## 5-For循环
+
+for 是 Go 中唯一的循环结构。这里会展示 for 循环的三种基本使用方式。
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+	
+	// 最基础的方式，单个循环条件
+	i := 1
+	for i <= 3 {
+		fmt.Println(i)
+		 i = i + 1
+	}
+
+	// 经典的初始/条件/后续 for循环
+	for j := 7; j <= 9; j++ {
+		fmt.Println(j)
+	}
+
+	// 不带条件的for循环将一直重复执行，直到在循环体内
+	// 使用了break或者return跳出循环
+	for {
+		fmt.Println("loop")
+		break
+	}
+
+	// 你也可以使用continue直接进入下一次循环
+	for n := 0; n <= 5; n++ {
+		if n%2 == 0 {
+			continue
+		}
+		fmt.Println(n)
+	}
+}
+```
+
+PS C:\Users\chenfengyuan\Coding-cf> go run "c:\Users\chenfengyuan\Coding-cf\Go\GoByExample\for\for.go"    
+1
+2
+3
+7
+8
+9
+loop
+1
+3
+5
+
+我们在后续教程中学习 range 语句，channels 以及其他数据结构时， 还会看到一些 for 的其它用法。
 
 ## 6-If/Else分支
 
+if 和 else 分支结构在 Go 中非常直接。
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+	
+	// 这里是一个基本的例子
+	if 7%2 == 0 {
+		fmt.Println("7 is even")
+	} else {
+		fmt.Println("7 is odd")
+	}
+
+	// 你可以不要else只用if语句
+	if 8%4 == 0 {
+		fmt.Println("8 is divisible by 4")
+	}
+
+	// 在条件语句之前可以有一个声明语句；在这里声明的变量可以在
+	// 这个语句所有的条件分支中使用
+	if num := 9; num < 0 {
+		fmt.Println(num, "is negative")
+	} else if num < 10 {
+		fmt.Println(num, "has 1 digit")
+	} else {
+		fmt.Println(num, "has multiple digits")
+	}
+}
+```
+
+> 注意，在 Go 中，条件语句的圆括号不是必需的，但是花括号是必需的。
+
+PS C:\Users\chenfengyuan\Coding-cf> go run "c:\Users\chenfengyuan\Coding-cf\Go\GoByExample\if-else\if-else.go"
+7 is odd
+8 is divisible by 4
+9 has 1 digit
+
+*Go 没有三目运算符， 即使是基本的条件判断，依然需要使用完整的 if 语句。*
+
 ## 7-Switch分支结构
+
+switch 是多分支情况时快捷的条件语句。
+
+> 突然发现一个Bug，更新Vscode后，好像不能正常检查Go代码了，这就很无语呀。
+> 但是终究不是影响运行的大问题，忍忍吧。😂
+
+```go
+
+```
+
+
 
 ## 8-数组
 
