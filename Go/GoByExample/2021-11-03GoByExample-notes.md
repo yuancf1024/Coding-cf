@@ -488,19 +488,199 @@ dcl: [g h i]
 
 **map** 是 Go 内建的关联数据类型 （在一些其他的语言中也被称为 **哈希(hash)** 或者 **字典(dict)** ）。
 
-```go
+要创建一个空 map，需要使用内建函数 make：`make(map[key-type]val-type)`。
 
+使用典型的 `name[key] = val` 语法来设置键值对。
+
+打印 map。例如，使用 `fmt.Println` 打印一个 map，会输出它所有的键值对。
+
+使用 `name[key]` 来获取一个键的值。
+
+内建函数 `len` 可以返回一个 map 的键值对数量。
+
+内建函数 `delete` 可以从一个 map 中移除键值对。
+
+当从一个 map 中取值时，还有可以选择是否接收的第二个返回值，该值表明了 map 中是否存在这个键。 这可以用来消除 *键不存在* 和 *键的值为零值* 产生的歧义， 例如 0 和 ""。这里我们不需要值，所以用 *空白标识符(blank identifier) `_`*将其忽略
+
+你也可以通过右边的语法在一行代码中声明并初始化一个新的 map。
+
+注意，使用 `fmt.Println` 打印一个 map 的时候， 是以 `map[k:v k:v]` 的格式输出的。
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+	m := make(map[string]int)
+
+	m["k1"] = 7
+	m["k2"] = 13
+
+	fmt.Println("map:", m)
+
+	v1 := m["k1"]
+	fmt.Println("v1:", v1)
+
+	fmt.Println("len:", len(m))
+
+	delete(m, "k2")
+	fmt.Println("map:", m)
+
+	_, prs := m["k2"]
+	fmt.Println("prs:", prs)
+
+	n:=map[string]int{"foo": 1, "bar": 2}
+	fmt.Println("map:", n)
+
+}
 ```
 
-
+PS C:\Users\chenfengyuan\Coding-cf> go run "c:\Users\chenfengyuan\Coding-cf\Go\GoByExample\maps\maps.go"
+map: map[k1:7 k2:13]
+v1: 7
+len: 2
+map: map[k1:7]
+prs: false
+map: map[bar:2 foo:1]
 
 ## 11-Range遍历
 
+`range` 用于迭代各种各样的数据结构。 让我们来看看如何在我们已经学过的数据结构上使用 `range`。
+
+这里我们使用 `range` 来对 `slice` 中的元素求和。 *数组也可以用这种方法初始化并赋初值*。
+
+`range` 在数组和 `slice` 中提供对每项的索引和值的访问。 上面我们不需要索引，所以我们使用 空白标识符 _ 将其忽略。 实际上，我们有时候是需要这个索引的。
+
+range 在 map 中迭代键值对。
+
+range 也可以只遍历 map 的键。
+
+range 在字符串中迭代 unicode 码点(code point)。 第一个返回值是字符的起始字节位置，然后第二个是字符本身。
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+	nums := []int{2, 3, 4}
+	sum := 0
+	for _, num := range nums {
+		sum += num
+	}
+	fmt.Println("sum:", sum)
+
+	for i, num := range nums {
+		if num == 3 {
+			fmt.Println("index:", i)
+		}
+	}
+
+	kvs := map[string]string{"a": "apple", "b": "banana"}
+	for k, v := range kvs {
+		fmt.Printf("%s -> %s\n", k, v)
+	}
+
+	for k := range kvs {
+		fmt.Println("key:", k)
+	}
+
+	for i, c := range "go" {
+		fmt.Println(i, c)
+	}
+}
+```
+
+PS C:\Users\chenfengyuan\Coding-cf> go run "c:\Users\chenfengyuan\Coding-cf\Go\GoByExample\range\range.go"
+sum: 9
+index: 1
+a -> apple
+b -> banana
+key: a
+key: b
+0 103
+1 111
+
 ## 12-函数
+
+**函数** 是 Go 的核心。我们将通过一些不同的例子来进行学习它。
+
+这里是一个函数，接受两个 int 并且以 int 返回它们的和
+
+Go 需要明确的 return，也就是说，它不会自动 return 最后一个表达式的值
+
+当多个连续的参数为同样类型时， 可以仅声明最后一个参数的类型，忽略之前相同类型参数的类型声明。
+
+通过 *函数名(参数列表)* 来调用函数，
+
+Go 函数还有很多其他的特性。 其中一个就是多值返回，它也是我们接下来要接触的。
+
+```go
+package main
+
+import "fmt"
+
+func plus(a int, b int) int {
+	return a + b
+}
+
+func plusPlus(a, b, c int) int {
+	return a + b + c
+}
+
+func main() {
+	res := plus(1, 2)
+	fmt.Println("1+2 = ", res)
+
+	res = plusPlus(1, 2, 3)
+	fmt.Println("1+2+3 =", res)
+}
+```
+
+PS C:\Users\chenfengyuan\Coding-cf> go run "c:\Users\chenfengyuan\Coding-cf\Go\GoByExample\functions\functions.go"    
+1+2 =  3
+1+2+3 = 6
 
 ## 13-多返回值
 
+Go 原生支持 _多返回值_。 这个特性在 Go 语言中经常用到，*例如用来同时返回一个函数的结果和错误信息。*
+
+(int, int) 在这个函数中标志着这个函数返回 2 个 int。
+
+这里我们通过 **多赋值** 操作来使用这两个不同的返回值。
+
+如果你仅仅需要返回值的一部分的话，你可以使用空白标识符 _。
+
+```go
+package main
+
+import "fmt"
+
+func vals() (int, int) {
+	return 3, 7
+}
+
+func main() {
+	a, b := vals()
+	fmt.Println(a)
+	fmt.Println(b)
+
+	_, c := vals()
+	fmt.Println(c)
+}
+```
+
+PS C:\Users\chenfengyuan\Coding-cf> go run "c:\Users\chenfengyuan\Coding-cf\Go\GoByExample\multiple-return-values\multiple-return-values.go"
+3
+7
+7
+
 ## 14-变参函数
+
+我们接下来要学习的是 Go 函数另一个很好的特性：变参函数。
+
+
 
 ## 15-闭包
 
