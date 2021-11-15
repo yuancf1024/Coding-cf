@@ -680,19 +680,271 @@ PS C:\Users\chenfengyuan\Coding-cf> go run "c:\Users\chenfengyuan\Coding-cf\Go\G
 
 我们接下来要学习的是 Go 函数另一个很好的特性：变参函数。
 
+**可变参数函数**。 在调用时可以传递任意数量的参数。 例如，`fmt.Println` 就是一个常见的变参函数。
 
+这个函数接受任意数量的 `int` 作为参数。
+
+变参函数使用常规的调用方式，传入独立的参数。
+
+如果你有一个含有多个值的 `slice`，想把它们作为参数使用， 你需要这样调用 `func(slice...)`。
+
+```go
+package main
+
+import "fmt"
+
+func sum(nums ...int) {
+	fmt.Print(nums, " ")
+	total := 0
+	for _, num := range nums {
+		total += num
+	}
+	fmt.Println(total)
+}
+
+func main() {
+	sum(1, 2)
+	sum(1, 2, 3)
+
+	nums := []int{1, 2, 3, 4}
+	sum(nums...)
+}
+```
+
+PS C:\Users\chenfengyuan\Coding-cf> go run "c:\Users\chenfengyuan\Coding-cf\Go\GoByExample\variadic-functions\variadic-functions.go"
+[1 2] 3
+[1 2 3] 6
+[1 2 3 4] 10
 
 ## 15-闭包
 
+接下来我们要看的是 Go 函数的另一个关键特性：闭包。
+
+Go 支持**匿名函数**， 并能用其构造 **闭包**。 *匿名函数在你想定义一个不需要命名的内联函数时是很实用的。*
+
+`intSeq` 函数返回一个在其函数体内定义的匿名函数。 返回的函数使用闭包的方式 **隐藏**变量 `i`。 返回的函数 **隐藏** 变量 `i` 以形成闭包。
+
+我们调用 `intSeq` 函数，将返回值（一个函数）赋给 `nextInt`。 这个函数的值包含了自己的值 `i`，这样在每次调用 `nextInt` 时，都会更新 `i` 的值。
+
+通过多次调用 nextInt 来看看闭包的效果。
+
+为了确认这个状态对于这个特定的函数是唯一的，我们重新创建并测试一下。
+
+```go
+package main
+
+import "fmt"
+
+func intSeq() func() int {
+	i := 0
+	return func() int {
+		i++
+		return i
+	}
+}
+
+func main() {
+	nextInt := intSeq()
+
+	fmt.Println(nextInt())
+	fmt.Println(nextInt())
+	fmt.Println(nextInt())
+
+	newInts := intSeq()
+	fmt.Println(newInts())
+}
+```
+
+PS C:\Users\chenfengyuan\Coding-cf> go run "c:\Users\chenfengyuan\Coding-cf\Go\GoByExample\closures\closures.go"      
+1
+2
+3
+1
+
 ## 16-递归
+
+我们马上要学习关于函数的最后一个特性：递归。
+
+Go 支持 **递归**。 这里是一个经典的阶乘示例。
+
+`fact` 函数在到达 `fact(0)` 前一直调用自身。
+
+```go
+package main
+
+import "fmt"
+
+func fact(n int) int {
+	if n == 0 {
+		return 1
+	}
+	return n * fact(n-1)
+}
+
+func main() {
+	fmt.Println(fact(7))
+}
+```
+
+PS C:\Users\chenfengyuan\Coding-cf> go run "c:\Users\chenfengyuan\Coding-cf\Go\GoByExample\recursion\recursion.go"    
+5040
 
 ## 17-指针
 
+Go 支持 **指针**， 允许在程序中通过 `引用传递` 来传递值和数据结构。
+
+我们将通过两个函数：`zeroval` 和 `zeroptr` 来比较 `指针` 和 `值`。 `zeroval` 有一个 `int` 型参数，所以使用值传递。 `zeroval` 将从调用它的那个函数中得到一个**实参的拷贝**：`ival`。
+
+`zeroptr` 有一个和上面不同的参数：`*int`，这意味着它使用了 `int` 指针。 紧接着，函数体内的 `*iptr` 会 **解引用** 这个指针，*从它的内存地址得到这个地址当前对应的值*。 **对解引用的指针赋值，会改变这个指针引用的真实地址的值。**
+
+通过 `&i` 语法来取得 `i` 的内存地址，即指向 `i` 的指针。
+
+指针也是可以被打印的。
+
+`zeroval` 在 `main` 函数中不能改变 `i` 的值， 但是 `zeroptr` 可以，*因为它有这个变量的内存地址的引用*。
+
+```go
+package main
+
+import "fmt"
+
+func zeroval(ival int) {
+	ival = 0
+}
+
+func zeroptr(iptr *int) {
+	*iptr = 0
+}
+
+func main() {
+	i := 1
+	fmt.Println("initial:", i)
+
+	zeroval(i)
+	fmt.Println("zeroval:", i)
+
+	zeroptr(&i)
+	fmt.Println("zeroptr:", i)
+
+	fmt.Println("pointer:", &i)
+}
+```
+
+PS C:\Users\chenfengyuan\Coding-cf> go run "c:\Users\chenfengyuan\Coding-cf\Go\GoByExample\pointers\pointers.go"      
+initial: 1
+zeroval: 1
+zeroptr: 0
+pointer: 0xc000012078
+
 ## 18-结构体
+
+Go 的**结构体(struct)** 是带类型的字段(fields)集合。 这在组织数据时非常有用。
+
+这里的 `person` 结构体包含了 `name` 和 `age` 两个字段。
+
+使用这个语法创建新的结构体元素。
+
+你可以在初始化一个结构体元素时指定字段名字。
+
+省略的字段将被初始化为零值。
+
+`&` 前缀生成一个结构体指针。
+
+使用`.`来访问结构体字段。
+
+也可以对结构体指针使用`.` - 指针会被自动解引用。
+
+结构体是*可变(mutable)的*.
+
+```go
+package main
+
+import "fmt"
+
+type person struct {
+	name string
+	age int
+}
+
+func main() {
+	fmt.Println(person{"Bob", 20})
+
+	fmt.Println(person{name: "Alice", age: 30})
+
+	fmt.Println(person{name: "Fred"})
+
+	fmt.Println(&person{name: "Ann", age: 40})
+
+	s := person{name: "Sean", age: 50}
+	fmt.Println(s.name)
+
+	sp := &s
+	fmt.Println(sp.age)
+
+	sp.age = 51
+	fmt.Println(sp.age)
+}
+```
+
+PS C:\Users\chenfengyuan\Coding-cf> go run "c:\Users\chenfengyuan\Coding-cf\Go\GoByExample\structs\structs.go"        
+{Bob 20}
+{Alice 30}
+{Fred 0}
+&{Ann 40}
+Sean
+50
+51
 
 ## 19-方法
 
+Go 支持为结构体类型定义**方法(methods)** 。
+
+这里的 `area` 是一个拥有 **`*rect` 类型接收器(receiver)**的方法。
+
+可以为值类型或者指针类型的接收者定义方法。 这是一个值类型接收者的例子。
+
+这里我们调用上面为结构体定义的两个方法。
+
+调用方法时，Go 会自动处理值和指针之间的转换。 *想要避免在调用方法时产生一个拷贝，或者想让方法可以修改接受结构体的值， 你都可以使用指针来调用方法。*
+
+```go
+package main
+
+import "fmt"
+
+type rect struct {
+	width, height int
+}
+
+func (r *rect) area() int {
+	return r.width * r.height
+}
+
+func (r rect) perim() int {
+	return 2*r.width + 2*r.height
+}
+
+func main() {
+	r := rect{width: 10, height: 5}
+
+	fmt.Println("area: ", r.area())
+	fmt.Println("perim: ", r.perim())
+
+	rp := &r // & 取得 r 的地址
+	fmt.Println("area: ", rp.area())
+	fmt.Println("perim: ", rp.perim())
+}
+```
+
+PS C:\Users\chenfengyuan\Coding-cf> go run "c:\Users\chenfengyuan\Coding-cf\Go\GoByExample\methods\methods.go"        
+area:  50
+perim:  30
+area:  50
+perim:  30
+
 ## 20-接口
+
+接下来，我们将学习 Go 对方法集进行命名和分组的另一机制：接口。
 
 ## 21-错误处理
 
