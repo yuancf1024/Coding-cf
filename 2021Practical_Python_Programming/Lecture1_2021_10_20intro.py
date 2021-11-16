@@ -33,14 +33,26 @@ print(True, False)
 # """X\tY\tZ
 # 1\t2\t3
 # """
-print("One\nTwo", 'I\'m', 
-"""X\tY\tZ
-1\t2\t3
-""") # 一个制表符-跳动7格
+print("One\nTwo", 'I\'m') # 一个制表符-跳动7格
+
+# 多行字符串
+print("""X\tY\tZ
+1\t2\t3""")
+
+# 单引号和双引号的区别
+print("I'm a teacher") # 方法1
+print('I\'m a teacher') # 转义
+print("I'm a teacher\nYeah!") # 程序型表达
+
+# 三引号 原封不动保存原字符串的格式
+
+print('Hello' + ' ' + 'World')
 # %%
 # 字节型
 # bytes b"toto\xfe\775"
 print(b"toto\xfe\775")
+
+
 # %% 容器类型——列表
 
 # 顺序序列：快速索引访问，重复值
@@ -57,4 +69,12 @@ print(b"toto\xfe\775")
 # keys=hashable values(base types, immutable...)
 # frozenset immutable set
 
-# %% 
+# %% 数据四要素
+
+id(345)
+
+a = 345
+
+id(a)
+
+# %%
