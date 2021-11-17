@@ -46,14 +46,30 @@ def evaluate_password(password, show_info=True):
 
 
 def generate_password():
-    all_char_set = string.ascii_lowercase \
-        + string.ascii_uppercase \
-        + string.digits \
-        + string.punctuation
+    all_char_set = string.printable
     # print(all_char_set)
     all_char_set *=  9
     # print(all_char_set)
     result = ''.join(random.sample(all_char_set, k=9))
+    return result
+
+def create_password(pass_length, confuse=False):
+    result = ''
+    # TODO: 生成指定长度包含四类字符的密码前四位
+    result += random.choice(string.ascii_uppercase)
+    result += random.choice(string.ascii_lowercase)
+    result += random.choice(string.digits)
+    result += random.choice(string.punctuation)
+    # print(result)
+    if confuse:
+        result += 'Il'
+        result += ''.join(random.sample(string.printable[:-6]*pass_length, pass_length-6))
+    else:
+        result += ''.join(random.sample(string.printable[:-6]*pass_length, pass_length-4))
+    # TODO：对生成密码进行随机打乱
+    # random.shuffle(result)
+    # print(result)
+    result = ''.join(random.sample(result, len(result)))
     return result
 
 def main_userinput():
@@ -62,11 +78,15 @@ def main_userinput():
         if evaluate_password(user_password):
             break
 
-def main():
+def main_genpassword():
     while 1:
         user_password = generate_password()
         if evaluate_password(user_password, show_info=False):
             print(f"新生成密码为：{user_password}")
             break
+
+def main():
+    for i in range(1):
+        print(f"新生成密码为：{create_password(12, True)}")
 
 main()
