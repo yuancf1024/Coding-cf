@@ -1,24 +1,22 @@
+import string
+
 while 1:
     # TODO: 用户输入密码
     user_password = input("请输入新密码：")
 
     # TODO: 判断密码安全性
-    UPPER = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-    LOWER = 'abcdefghijklmnopqrstuvwxyz'
-    DIGIT = '0123456789'
-    # PUNCTUATION = '~!@#$%^&*()_+-+:";\'<>,./\\?'
-
+ 
     have_upper = False
     have_lower = False
     have_digit = False
     have_punctuation = False
 
     for char in user_password: # 下面的条件属于多选一，具有排他性
-        if char in UPPER:
+        if char in string.ascii_uppercase:
             have_upper = True
-        elif char in LOWER:
+        elif char in string.ascii_lowercase:
             have_lower = True
-        elif char in DIGIT:
+        elif char in string.digits:
             have_digit = True
         # if char in PUNCTUATION:
         else:
