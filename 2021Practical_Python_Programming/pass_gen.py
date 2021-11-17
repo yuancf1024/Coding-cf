@@ -6,46 +6,37 @@ while 1:
 
     # TODO: 判断密码安全性
  
-    have_upper = False
-    have_lower = False
-    have_digit = False
-    have_punctuation = False
+    password_state = 0b00000
 
     for char in user_password: # 下面的条件属于多选一，具有排他性
         if char in string.ascii_uppercase:
-            have_upper = True
+            password_state |= 0b10000
         elif char in string.ascii_lowercase:
-            have_lower = True
+            password_state |= 0b01000
         elif char in string.digits:
-            have_digit = True
-        # if char in PUNCTUATION:
+            password_state |= 0b00100
         else:
-            have_punctuation = True
-    have_enough_char = len(user_password) >= 8
+            password_state |= 0b00010
 
-    is_secure = (have_enough_char
-        and have_upper 
-        and have_lower 
-        and have_digit 
-        and have_punctuation)
-    # TODO: 输出
-    # print(is_secure)
+    if len(user_password) >= 8:
+        password_state |= 0b00001
 
-    if is_secure:
+    # TODO: 输出结果
+
+    if password_state == 0b11111:
         print('密码符合要求！')
         break
     else:
         prompt = '密码不符合要求，' # 下面的条件属于并行判断
-        if not have_enough_char:
+        if password_state & 0b00001 == 0: # 长度不足8时，按位与为0
             prompt += '长度不足8，'
-        if not have_upper:
+        if password_state & 0b10000 == 0:
             prompt += '没有包含大写符号，'
-        if not have_lower:
+        if password_state & 0b01000 == 0:
             prompt += '没有包含小写符号，'
-        if not have_digit:
+        if password_state & 0b00100 == 0:
             prompt += '没包含数字，'
-        if not have_punctuation:
+        if password_state & 0b00010 == 0:
             prompt += '没包含标点，'
         prompt = prompt[:-1]
         print(prompt)
-
