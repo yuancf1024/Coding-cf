@@ -946,6 +946,82 @@ perim:  30
 
 接下来，我们将学习 Go 对方法集进行命名和分组的另一机制：接口。
 
+方法签名的集合叫做：_接口(Interfaces)_。
+
+这是一个几何体的基本接口。
+
+在这个例子中，我们将为 `rect` 和 `circle` 实现该接口。
+
+**要在 Go 中实现一个接口，我们只需要实现接口中的所有方法。** 这里我们为 `rect` 实现了 `geometry` 接口。
+
+`circle` 的实现。
+
+如果一个变量实现了某个接口，我们就可以调用指定接口中的方法。 这儿有一个通用的 `measure` 函数，我们可以通过它来使用所有的 `geometry`。
+
+结构体类型 `circle` 和 `rect` 都实现了 `geometry` 接口， 所以我们可以将其实例作为 `measure` 的参数。
+
+要学习更多关于 Go 接口的知识， 可以看看这篇[很棒的博文](http://jordanorelli.tumblr.com/post/32665860244/how-to-use-interfaces-in-go)。
+
+```go
+package main
+
+import (
+	"fmt"
+	"math"
+)
+
+type geometry interface {
+	area() float64
+	perim() float64
+}
+
+type rect struct {
+	width, height float64
+}
+
+type circle struct {
+	radius float64
+}
+
+func (r rect) area() float64 {
+	return r.width * r.height
+}
+
+func (r rect) perim() float64 {
+	return 2*r.width + 2*r.height
+}
+
+func (c circle) area() float64 {
+	return math.Pi * c.radius * c.radius
+}
+
+func (c circle) perim() float64 {
+	return 2 * math.Pi * c.radius
+}
+
+func measure(g geometry) {
+	fmt.Println(g)
+	fmt.Println(g.area())
+	fmt.Println(g.perim())
+}
+
+func main() {
+	r := rect{width: 3, height: 4}
+	c := circle{radius: 5}
+
+	measure(r)
+	measure(c)
+}
+```
+
+PS C:\Users\chenfengyuan\Coding-cf> go run "c:\Users\chenfengyuan\Coding-cf\Go\GoByExample\interfaces\interfaces.go"  
+{3 4}
+12
+14
+{5}
+78.53981633974483
+31.41592653589793
+
 ## 21-错误处理
 
 ## 22-协程
