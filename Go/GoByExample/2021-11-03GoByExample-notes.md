@@ -6,13 +6,75 @@
 
 - [x] 2021-11-03 1-Hello World
 - [x] 2021-11-04 中午2+3
-- [ ] 2021-11-06 4~20
+- [x] 2021-11-06~23 4~20
+- [x] 2021-11-24 21
+- [x] 2021-11-25 22~26
+- [x] 2021-11-26 27~40 有一些没有完全消化，需要对照相应资料深入理解和思考
+- [ ] 
 
 ## Readme
 
 Go by Example 是一个通过带注释的示例程序学习 Go 语言的网站。网站包含了从简单的 Hello World 到高级特性 Goroutine、Channel 等一系列示例程序，并附带了注释说明，非常适合 Go 语言初学者。
 
 如果您想学习 Go 语言基础知识，不要犹豫，请直接前往 Go by Example 开始学习！
+
+## notes
+
+1. 指针
+
+\* 解引用指针，从对应地址获取值；
+
+& 取得对象的内存地址，即指向对象的指针。
+
+2. Go 计算程序运行时间
+
+**计算代码块的运行时间**
+
+> 其中time.Since()函数返回字符串类型，例如1h2m3s等，可能还有us等.
+
+```go
+start := time.Now()
+//some func or operation
+cost := time.Since(start)
+fmt.Printf("cost=[%s]",cost) 
+```
+
+3. Go select使用
+
+Go中的select和channel配合使用，通过select可以监听多个channel的I/O读写事件，当 IO操作发生时，触发相应的动作。
+
+**基本用法**
+
+```go
+//select基本用法
+select {
+case <- chan1:
+// 如果chan1成功读到数据，则进行该case处理语句
+case chan2 <- 1:
+// 如果成功向chan2写入数据，则进行该case处理语句
+default:
+// 如果上面都没有成功，则进入default处理流程
+```
+
+**使用规则**
+
+1. 如果没有default分支,select会阻塞在多个channel上，对多个channel的读/写事件进行监控。
+2. 如果有一个或多个IO操作可以完成，则Go运行时系统会随机的选择一个执行，否则的话，如果有default分支，则执行default分支语句，如果连default都没有，则select语句会一直阻塞，直到至少有一个IO操作可以进行。　　　
+
+**计算函数的运行时间**
+
+> 利用defer的作用，可以在函数开始的时候获取一个时间，使用time.Now()在函数结束的时候，获取程序从标记开始的时间段，可以得到函数运行的时间。
+
+```go
+func compute() {
+    start := time.Now()
+    defer func() {
+        cost := time.Since(start)
+        fmt.Println("cost=", cost)
+    }()
+    // some computation
+}
+```
 
 ## 1-Hello World
 
@@ -848,14 +910,6 @@ Go 的**结构体(struct)** 是带类型的字段(fields)集合。 这在组织�
 
 省略的字段将被初始化为零值。
 
-`&` 前缀生成一个结构体指针。
-
-使用`.`来访问结构体字段。
-
-也可以对结构体指针使用`.` - 指针会被自动解引用。
-
-结构体是*可变(mutable)的*.
-
 ```go
 package main
 
@@ -873,14 +927,18 @@ func main() {
 
 	fmt.Println(person{name: "Fred"})
 
+	// `&` 前缀生成一个结构体指针。
 	fmt.Println(&person{name: "Ann", age: 40})
 
+	// 使用`.`来访问结构体字段。
 	s := person{name: "Sean", age: 50}
 	fmt.Println(s.name)
 
+	// 也可以对结构体指针使用`.` - 指针会被自动解引用。
 	sp := &s
 	fmt.Println(sp.age)
 
+	// 结构体是可变(mutable)的
 	sp.age = 51
 	fmt.Println(sp.age)
 }
@@ -1022,7 +1080,107 @@ PS C:\Users\chenfengyuan\Coding-cf> go run "c:\Users\chenfengyuan\Coding-cf\Go\G
 78.53981633974483
 31.41592653589793
 
-## 21-错误处理
+## 21-错误处理 反复思考🤔
+
+*符合 Go 语言习惯的做法是使用一个独立、明确的返回值来传递错误信息*。 这与 Java、Ruby 使用的异常（exception） 以及在 C 语言中有时用到的重载 (overloaded) 的单返回/错误值有着明显的不同。 Go 语言的处理方式能清楚的知道哪个函数返回了错误，并使用跟其他（无异常处理的）语言类似的方式来处理错误。
+
+按照惯例，错误通常是最后一个返回值并且是 `error` 类型，它是一个内建的接口。
+
+`errors.New` 使用给定的错误信息构造一个基本的 `error` 值。
+
+返回错误值为 `nil` 代表没有错误。
+
+你还可以通过实现 `Error()` 方法来自定义 error 类型。 这里使用自定义错误类型来表示上面例子中的参数错误。
+
+在这个例子中，我们使用 `&argError` 语法来建立一个新的结构体， 并提供了 `arg` 和 `prob` 两个字段的值。
+
+下面的两个循环测试了每一个会返回错误的函数。 注意，在 if 的同一行进行错误检查，是 Go 代码中的一种常见用法。
+
+如果你想在程序中使用自定义错误类型的数据， 你需要通过类型断言来得到这个自定义错误类型的实例。
+
+到 Go 官方博客去看这篇[很棒的文章](http://blog.golang.org/2011/07/error-handling-and-go.html)， 以获取更多关于错误处理的信息。
+
+```go
+package main
+
+import (
+	"errors"
+	"fmt"
+)
+
+func f1(arg int) (int, error) {
+	if arg == 42 {
+		// errors.New 使用给定的错误信息构造一个基本的 error 值。
+		return -1, errors.New("can't work with 42")
+	}
+	
+	return arg + 3, nil // 返回错误值为 nil 代表没有错误。
+}
+
+type argError struct {
+	arg int
+	prob string
+}
+
+// 你还可以通过实现 Error() 方法来自定义 error 类型。 
+// 这里使用自定义错误类型来表示上面例子中的参数错误。
+func (e *argError) Error() string { // * 解引用指针，从对应地址获取值
+	return fmt.Sprintf("%d - %s", e.arg, e.prob)
+}
+
+// 在这个例子中，我们使用 &argError 语法来建立一个新的结构体， 
+// 并提供了 arg 和 prob 两个字段的值。
+func f2(arg int) (int, error) {
+	if arg == 42 {
+		return -1, &argError{arg, "can't work with it"}
+	}
+	return arg + 3, nil
+}
+
+func main() {
+	// 下面的两个循环测试了每一个会返回错误的函数。 
+	// 注意，在 if 的同一行进行错误检查，是 Go 代码中的一种常见用法。
+	for _, i := range []int{7, 42} {
+		if r, e := f1(i); e != nil {
+			fmt.Println("f1 failed:", e)
+		} else {
+			fmt.Println("f1 worked:", r)
+		}
+	}
+
+	for _, i := range []int{7, 42} {
+		if r, e := f2(i); e != nil {
+			fmt.Println("f2 failed:", e)
+		} else {
+			fmt.Println("f2 worked:", r)
+		}
+	}
+
+// 如果你想在程序中使用自定义错误类型的数据， 
+// 你需要通过类型断言来得到这个自定义错误类型的实例。
+	_, e := f2(42)
+	if ae, ok := e.(*argError); ok {
+		fmt.Println(ae.arg)
+		fmt.Println(ae.prob)
+		fmt.Println("***Test***") // test
+		fmt.Println(ok) // test
+		fmt.Println(e.(*argError))
+		fmt.Println(e)
+	}
+}
+```
+
+PS D:\Coding-cf> go run "d:\Coding-cf\Go\GoByExample\errors\errors.go"
+f1 worked: 10
+f1 failed: can't work with 42
+f2 worked: 10
+f2 failed: 42 - can't work with it
+42
+can't work with it
+***Test***
+true
+42 - can't work with it
+42 - can't work with it
 
 符合 Go 语言习惯的做法是使用一个独立、明确的返回值来传递错误信息。 这与 Java、Ruby 使用的异常（exception） 以及在 C 语言中有时用到的重载 (overloaded) 的单返回/错误值有着明显的不同。 Go 语言的处理方式能清楚的知道哪个函数返回了错误，并使用跟其他（无异常处理的）语言类似的方式来处理错误。
 
@@ -1107,45 +1265,1186 @@ can't work with it
 
 ## 22-协程
 
+**协程(goroutine)**是轻量级的执行线程。
 
+假设我们有一个函数叫做 f(s)。 我们一般会这样 *同步地* 调用它
+
+使用 go f(s) 在一个协程中调用这个函数。 这个新的 Go 协程将会 *并发地* 执行这个函数。
+
+你也可以为匿名函数启动一个协程。
+
+现在两个协程在独立的协程中 *异步地* 运行， 然后等待两个协程完成（更好的方法是使用 [WaitGroup](https://gobyexample-cn.github.io/waitgroups)）。
+
+```go
+package main
+
+import (
+	"fmt"
+	"time"
+)
+
+func f(from string) {
+	for i := 0; i < 3; i++ {
+		fmt.Println(from, ":", i)
+	}
+}
+
+func main() {
+
+	// 假设我们有一个函数叫做 f(s)。 我们一般会这样 同步地 调用它
+	f("direct")
+
+	// 使用 go f(s) 在一个协程中调用这个函数。 这个新的 Go 协程将会 并发地 执行这个函数。
+	go f("goroutine")
+
+	// 你也可以为匿名函数启动一个协程。
+	go func(msg string) {
+		fmt.Println(msg)
+	} ("going")
+
+	// 现在两个协程在独立的协程中 异步地 运行， 然后等待两个协程完成（更好的方法是使用 WaitGroup）。
+	time.Sleep(time.Second)
+	fmt.Println("done")
+}
+```
+
+PS D:\Coding-cf\C\Hello> go run "d:\Coding-cf\Go\GoByExample\goroutines\goroutines.go"
+direct : 0
+direct : 1
+direct : 2
+going
+goroutine : 0
+goroutine : 1
+goroutine : 2
+done
+
+当我们运行这个程序时，首先会看到阻塞式调用的输出，然后是两个协程的交替输出。 这种*交替的情况表示 Go runtime 是以并发的方式运行协程的*。
 
 ## 23-通道
 
+下来我们将学习协程的辅助特性：通道（channels）。
+
+**通道(channels)** 是**连接多个协程**的管道。 你可以*从一个协程将值发送到通道，然后在另一个协程中接收*。
+
+使用 `make(chan val-type)` 创建一个新的通道。 通道类型就是他们需要传递值的类型。
+
+使用 `channel <-` 语法 *发送* 一个新的值到通道中。 这里我们在一个新的协程中发送 `"ping"` 到上面创建的 `messages` 通道中。
+
+使用 `<-channe`l 语法从通道中 *接收* 一个值。 这里我们会收到在上面发送的 `"ping"` 消息并将其打印出来。
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+	// 使用 make(chan val-type) 创建一个新的通道。 
+	// 通道类型就是他们需要传递值的类型。
+	messages := make(chan string)
+
+	go func() {
+		// 使用 channel <- 语法 发送 一个新的值到通道中。 
+		// 这里我们在一个新的协程中发送 "ping" 到上面创建的 messages 通道中。
+		messages <- "ping"
+	}()
+
+	// 使用 <-channel 语法从通道中 接收 一个值。 
+	// 这里我们会收到在上面发送的 "ping" 消息并将其打印出来。
+
+	msg := <- messages
+	fmt.Println(msg)
+}
+```
+
+PS D:\Coding-cf\C\Hello> go run "d:\Coding-cf\Go\GoByExample\channels\channels.go"
+ping
+
+我们运行程序时，通过通道， 成功的将消息 "ping" 从一个协程传送到了另一个协程中。
+
+*默认发送和接收操作是阻塞的，直到发送方和接收方都就绪。* 这个特性允许我们，不使用任何其它的同步操作， 就可以在程序结尾处等待消息 "ping"。
+
 ## 24-通道缓冲
 
-## 25-通道同步
+默认情况下，通道是 *无缓冲* 的，这意味着只有对应的接收（`<- chan`） 通道准备好接收时，才允许进行发送（`chan <-`）。 *有缓冲通道* 允许在没有对应接收者的情况下，缓存一定数量的值。
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+	// 这里我们 make 了一个字符串通道，最多允许缓存 2 个值。
+	messages := make(chan string, 2)
+
+	// 由于此通道是有缓冲的， 因此我们可以将这些值发送到通道中，而无需并发的接收。
+	messages <- "buffered"
+	messages <- "channel"
+
+	// 然后我们可以正常接收这两个值。
+	fmt.Println(<-messages)
+	fmt.Println(<-messages)
+}
+```
+
+PS D:\Coding-cf\C\Hello> go run "d:\Coding-cf\Go\GoByExample\channel-buffering\channel-buffering.go"
+buffered
+channel
+
+## 25-通道同步 思考🤔
+
+我们可以**使用通道来同步协程之间的执行状态**。 这儿有一个例子，*使用阻塞接收的方式，实现了等待另一个协程完成*。 **如果需要等待多个协程，WaitGroup 是一个更好的选择。**
+
+```go
+package main
+
+import (
+	"fmt"
+	"time"
+)
+
+func worker(done chan bool) {
+	// 我们将要在协程中运行这个函数。 
+	// done 通道将被用于通知其他协程这个函数已经完成工作。
+	fmt.Print("working...")
+	time.Sleep(time.Second)
+	fmt.Println("done")
+
+	// 发送一个值来通知我们已经完工啦。
+	done <- true // 从一个协程将值发送到通道
+}
+
+func main() {
+
+	// 运行一个 worker 协程，并给予用于通知的通道。
+	done := make(chan bool, 1)
+	go worker(done)
+
+	// 程序将一直阻塞，直至收到 worker 使用通道发送的通知。
+	<-done // 从通道接受
+	// 如果你把 <- done 这行代码从程序中移除， 程序甚至可能在 worker 开始运行前就结束了。
+}
+```
+
+PS D:\Coding-cf\C\Hello> go run "d:\Coding-cf\Go\GoByExample\channel-synchronization\channel-synchronization.go"
+working...done
 
 ## 26-通道方向
 
+*当使用通道作为函数的参数时，你可以指定这个通道是否为只读或只写。 该特性可以提升程序的类型安全。*
+
+```go
+package main
+
+import "fmt"
+
+// ping 函数定义了一个只能发送数据的（只写）通道。 
+// 尝试从这个通道接收数据会是一个编译时错误。
+func ping(pings chan<- string, msg string) {
+	pings <- msg // 发送数据到管道
+}
+
+// pong 函数接收两个通道，pings 仅用于接收数据（只读），
+// pongs 仅用于发送数据（只写）。
+func pong(pings <-chan string, pongs chan<- string) {
+	msg := <- pings // 从管道接收数据
+	pongs <- msg // 发送数据到管道
+}
+
+func main() {
+	pings := make(chan string, 1)
+	pongs := make(chan string, 1)
+	ping(pings, "passed message")
+	pong(pings, pongs)
+	fmt.Println(<-pongs) // 从通道接收
+}
+```
+
+PS D:\Coding-cf\C\Hello> go run "d:\Coding-cf\Go\GoByExample\channel-directions\channel-directions.go"
+passed message
+
+> 直接打印通道，会输出通道对应的内存地址
+
+```go
+PS D:\Coding-cf\C\Hello> go run "d:\Coding-cf\Go\GoByExample\channel-directions\channel-directions.go"
+0xc00006c0c0
+```
+
 ## 27-通道选择器
+
+Go 的 **选择器（select）** 让你可以同时等待多个通道操作。 **将协程、通道和选择器结合，是 Go 的一个强大特性。**
+
+```GO
+package main
+
+import (
+	"fmt"
+	"time"
+)
+
+func main() {
+	start := time.Now()
+
+	// 在这个例子中，我们将从两个通道中选择。
+	c1 := make(chan string)
+	c2 := make(chan string)
+
+	// 各个通道将在一定时间后接收一个值， 
+	// 通过这种方式来模拟并行的协程执行（例如，RPC 操作）时造成的阻塞（耗时）。
+	go func() {
+		time.Sleep(1 * time.Second)
+		c1 <- "one"
+	} ()
+
+	go func() {
+		time.Sleep(2 * time.Second)
+		c2 <- "two"
+	} ()
+
+	// 我们使用 select 关键字来同时等待这两个值， 
+	// 并打印各自接收到的值。
+	for i := 0; i < 2; i++ {
+		select {
+		case msg1 := <- c1:
+			fmt.Println("received", msg1)
+		case msg2 := <- c2:
+			fmt.Println("received", msg2)
+		}
+	}
+	cost := time.Since(start)
+	fmt.Printf("cost=[%s]",cost)
+}
+```
+
+PS D:\Coding-cf\C\Hello> go run "d:\Coding-cf\Go\GoByExample\select\select.go"
+received one
+received two
+cost=[2.0040901s]
+
+跟预期的一样，我们首先接收到值 "one"，然后是 "two"。
+
+注意，程序总共仅运行了两秒左右。因为 1 秒 和 2 秒的 Sleeps 是并发执行的，
 
 ## 28-超时处理
 
+**超时** 对于一个需要连接外部资源， 或者有耗时较长的操作的程序而言是很重要的。 得益于通道和 select，在 Go 中实现超时操作是简洁而优雅的。
+
+```go
+package main
+
+import (
+	"fmt"
+	"time"
+)
+
+func main() {
+	// 在这个例子中，假如我们执行一个外部调用， 
+	// 并在 2 秒后使用通道 c1 返回它的执行结果。
+	c1 := make(chan string, 1)
+	go func() {
+		time.Sleep(2 * time.Second)
+		c1 <- "result 1"
+	} ()
+
+	// 这里是使用 select 实现一个超时操作。 
+	// res := <- c1 等待结果，<-Time.After 等待超时（1秒钟）以后发送的值。 
+	// 由于 select 默认处理第一个已准备好的接收操作，
+	// 因此如果操作耗时超过了允许的 1 秒的话，将会执行超时 case。
+	select {
+	case res := <- c1:
+		fmt.Println(res)
+	case <- time.After(1 * time.Second):
+		fmt.Println("timeout 1")
+	}
+
+	c2 := make(chan string, 1)
+	go func() {
+		time.Sleep(2 * time.Second)
+		c2 <- "result 2"
+	}()
+
+	// 如果我们允许一个长一点的超时时间：3 秒， 
+	// 就可以成功的从 c2 接收到值，并且打印出结果。
+	select {
+	case res := <- c2:
+		fmt.Println(res)
+	case <- time.After(3 * time.Second):
+		fmt.Println("timeout 2")
+	}
+}
+```
+
+PS D:\Coding-cf\Go\GoByExample\select> go run "d:\Coding-cf\Go\GoByExample\timeouts\timeouts.go"
+timeout 1
+result 2
+
+运行这个程序，首先显示运行超时的操作，然后是成功接收的。
+
 ## 29-非阻塞通道操作
 
-## 30-通道的关闭
+常规的通过通道发送和接收数据是阻塞的。 然而，我们可以*使用带一个 `default` 子句的 `select` 来实现 **非阻塞** 的发送、接收，甚至是非阻塞的多路 `select`*。
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+	messages := make(chan string)
+	signals := make(chan bool)
+
+	// 这是一个非阻塞接收的例子。 
+	// 如果在 messages 中存在，然后 select 将这个值带入 <-messages case 中。 
+	// 否则，就直接到 default 分支中。
+	select {
+	case msg := <-messages:
+		fmt.Println("received message", msg)
+	default:
+		fmt.Println("no message received")
+	}
+
+	// 一个非阻塞发送的例子，代码结构和上面接收的类似。 
+	// msg 不能被发送到 message 通道，
+	// 因为这是 个无缓冲区通道，并且也没有接收者，
+	// 因此， default 会执行。
+	msg := "hi"
+	select {
+	case messages <- msg:
+		fmt.Println("sent message", msg)
+	default:
+		fmt.Println("no message sent")
+	}
+
+	// 我们可以在 default 前使用多个 case 子句来实现一个多路的非阻塞的选择器。 
+	// 这里我们试图在 messages 和 signals 上同时使用非阻塞的接收操作。
+	select {
+	case msg := <-messages:
+		fmt.Println("received message", msg)
+	case sig := <-signals:
+		fmt.Println("received signal", sig)
+	default:
+		fmt.Println("no activity")
+	}
+}
+```
+
+PS D:\Coding-cf\Go\GoByExample\select> go run "d:\Coding-cf\Go\GoByExample\non-blocking-channel-operations\non-blocking-channel-operations.go"
+no message received
+no message sent
+no activity
+
+## 30-通道的关闭 Question
+
+> 此部分运行结果和教程中的给出结果不一致，应该是Go版本迭代出现的问题，根据最新Go特性来解释。
+
+**关闭** 一个通道意味着不能再向这个通道发送值了。 该特性可以向通道的接收方传达工作已经完成的信息。
+
+```go
+package main
+
+import "fmt"
+
+// 在这个例子中，我们将使用一个 jobs 通道，将工作内容， 
+// 从 main() 协程传递到一个工作协程中。 
+// 当我们没有更多的任务传递给工作协程时，我们将 close 这个 jobs 通道。
+
+func main() {
+	jobs := make(chan int, 5)
+	done := make(chan bool)
+
+	// 这是工作协程。使用 j, more := <- jobs 循环的从 jobs 接收数据。 
+	// 根据接收的第二个值，如果 jobs 已经关闭了， 并且通道中所有的值都已经接收完毕，
+	// 那么 more 的值将是 false。 当我们完成所有的任务时，
+	// 会使用这个特性通过 done 通道通知 main 协程。
+	go func() {
+		for {
+			j, more := <-jobs
+			if more {
+				fmt.Println("received job", j)
+			} else {
+				fmt.Println("received all jobs")
+				done <- true
+				return
+			}
+		}
+	}()
+
+	// 使用 jobs 发送 3 个任务到工作协程中，然后关闭 jobs。
+	for j := 1; j <= 3; j++ {
+		jobs <- j
+		fmt.Println("sent job", j)
+	}
+	close(jobs)
+	fmt.Println("sent all jobs")
+	fmt.Println("Test1")
+
+	// 使用前面学到的通道同步方法等待任务结束。
+	<-done // 从通道接受
+}
+```
+
+PS D:\Coding-cf\Go\GoByExample\select> go run "d:\Coding-cf\Go\GoByExample\closing-channels\closing-channels.go"
+sent job 1
+sent job 2
+sent job 3
+sent all jobs
+Test1
+received job 1
+received job 2
+received job 3
+received all jobs
+
+给出的参考结果：
+```shell
+$ go run closing-channels.go
+sent job 1
+received job 1
+sent job 2
+received job 2
+sent job 3
+received job 3
+sent all jobs
+received all jobs
+```
+
+根据**关闭通道**的思想，可以引出我们的下一个示例：遍历通道。
 
 ## 31-通道遍历
 
+在前面的例子中， 我们讲过 `for` 和 `range` 为基本的数据结构提供了迭代的功能。 我们也可以使用这个语法来遍历的从通道中取值。
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+
+	// 我们将遍历在 queue 通道中的两个值。
+	queue := make(chan string, 2)
+	queue <- "one"
+	queue <- "two"
+	close(queue)
+
+	// range 迭代从 queue 中得到每个值。 
+	// 因为我们在前面 close 了这个通道，
+	// 所以，这个迭代会在接收完 2 个值之后结束。
+	for elem := range queue {
+		fmt.Println(elem)
+	}
+}
+```
+
+PS D:\Coding-cf\Go\GoByExample\select> go run "d:\Coding-cf\Go\GoByExample\range-over-channels\tempCodeRunnerFile.go"
+one
+two
+
+*这个例子也让我们看到，一个非空的通道也是可以关闭的， 并且，通道中剩下的值仍然可以被接收到。*
+
 ## 32-Timer
+
+我们经常需要在未来的某个时间点运行 Go 代码，或者每隔一定时间重复运行代码。 Go 内置的 *定时器* 和 *打点器* 特性让这些变得很简单。 我们会先学习定时器，然后再学习打点器。
+
+```go
+package main
+
+import (
+	"fmt"
+	"time"
+)
+
+func main() {
+	start := time.Now()
+
+	// 定时器表示在未来某一时刻的独立事件。
+	// 你告诉定时器需要等待的时间，
+	// 然后它将提供一个用于通知的通道。
+	// 这里的定时器将等待 2 秒。
+	timer1 := time.NewTimer(2 * time.Second)
+
+	// <-timer1.C 会一直阻塞，
+	// 直到定时器的通道 C 明确的发送了定时器失效的值。
+	<-timer1.C
+	fmt.Println("Timer 1 fired")
+
+	// 如果你需要的仅仅是单纯的等待，使用 time.Sleep 就够了。
+	// 使用定时器的原因之一就是，你可以在定时器触发之前将其取消。例如这样。
+	timer2 := time.NewTimer(time.Second)
+	go func() {
+		<-timer2.C
+		fmt.Println("Timer 2 fired")
+	}()
+	stop2 := timer2.Stop()
+	if stop2 {
+		fmt.Println("Timer 2 stopped")
+	}
+	// 给 timer2 足够的时间来触发它，以证明它实际上已经停止了。
+	time.Sleep(2 * time.Second)
+
+	cost := time.Since(start)
+	fmt.Printf("cost=[%s]", cost)
+}
+```
+
+第一个定时器将在程序开始后大约 2s 触发， 但是第二个定时器还未触发就停止了。
+
+PS D:\Coding-cf\Go\GoByExample\select> go run "d:\Coding-cf\Go\GoByExample\timers\timers.go"
+Timer 1 fired
+Timer 2 stopped
+cost=[4.0115602s]
 
 ## 33-Ticker
 
+- **定时器** 是当你*想要在未来某一刻执行一次时使用的*
+- **打点器** 则是为你*想要以固定的时间间隔重复执行而准备的。* 这里是一个打点器的例子，它将定时的执行，直到我们将它停止。
+
+```go
+package main
+
+import (
+	"fmt"
+	"time"
+)
+
+func main() {
+
+	start := time.Now()
+
+	// 打点器和定时器的机制有点相似：使用一个通道来发送数据。
+	// 这里我们使用通道内建的 select，等待每 500ms 到达一次的值。
+	fmt.Println("Test1") // Test
+	ticker := time.NewTicker(500 * time.Millisecond)
+	done := make(chan bool)
+
+	go func() {
+		for {
+			select {
+			case <-done:
+				return
+			case t := <-ticker.C:
+				fmt.Println("Tick at", t)
+			}
+		}
+	}()
+
+	// 打点器可以和定时器一样被停止。
+	// 打点器一旦停止，将不能再从它的通道中接收到值。
+	// 我们将在运行 1600ms 后停止这个打点器。
+	fmt.Println("Test2") // Test
+	time.Sleep(1600 * time.Millisecond)
+	fmt.Println("Test3") // Test
+	ticker.Stop()
+	fmt.Println("Test4") // Test
+	done <- true
+	fmt.Println("Ticker stopped")
+
+	cost := time.Since(start)
+	fmt.Printf("cost=[%s]", cost)
+}
+
+```
+
+我们运行这个程序时，打点器会在我们停止它前打点 3 次。
+
+PS D:\Coding-cf\Go\GoByExample\select> go run "d:\Coding-cf\Go\GoByExample\tickers\tickers.go"
+Test1
+Test2
+Tick at 2021-11-26 14:54:56.7337073 +0800 CST m=+0.514811001
+Tick at 2021-11-26 14:54:57.2339533 +0800 CST m=+1.015057001
+Tick at 2021-11-26 14:54:57.7348781 +0800 CST m=+1.515981801
+Test3
+Test4
+Ticker stopped
+cost=[1.6045433s]
+
 ## 34-工作池
+
+在这个例子中，我们将看到如何使用*协程与通道*实现一个**工作池**。
+
+```go
+package main
+
+import (
+	"fmt"
+	"time"
+)
+
+// 这是 worker 程序，我们会并发的运行多个 worker。
+// worker 将在 jobs 频道上接收工作，并在 results 上发送相应的结果。
+// 每个 worker 我们都会 sleep 一秒钟，
+// 以模拟一项昂贵的（耗时一秒钟的）任务。
+func worker(id int, jobs <-chan int, results chan<- int) {
+	for j := range jobs {
+		fmt.Println("worker", id, "started job", j)
+		time.Sleep(time.Second)
+		fmt.Println("worker", id, "finished job", j)
+		results <- j * 2
+	}
+}
+
+func main() {
+
+	start := time.Now()
+
+	// 为了使用 worker 工作池并且收集其的结果，我们需要 2 个通道。
+	const numJobs = 5
+	jobs := make(chan int, numJobs)
+	results := make(chan int, numJobs)
+
+	// 这里启动了 3 个 worker， 初始是阻塞的，因为还没有传递任务。
+	for w := 1; w <= 3; w++ {
+		go worker(w, jobs, results)
+	}
+	fmt.Println("Test1") // Test
+	// 这里我们发送 5 个 jobs，
+	// 然后 close 这些通道，表示这些就是所有的任务了。
+	for j := 1; j <= numJobs; j++ {
+		jobs <- j // 协程输出的地方
+	}
+
+	close(jobs)
+	fmt.Println("Test2") // Test
+	// 最后，我们收集所有这些任务的返回值。
+	// 这也确保了所有的 worker 协程都已完成。
+	// 另一个等待多个协程的方法是使用WaitGroup。
+	for a := 1; a <= numJobs; a++ {
+		<-results
+	}
+	fmt.Println("Test3") // Test
+
+	cost := time.Since(start)
+	fmt.Printf("cost=[%s]", cost)
+}
+```
+
+运行程序，显示 5 个任务被多个 worker 执行。 尽管所有的工作总共要花费 5 秒钟，但该程序只花了 2 秒钟， 因为 3 个 worker 是并行的。
+
+PS D:\Coding-cf\Go\GoByExample\select> go run "d:\Coding-cf\Go\GoByExample\worker-pools\worker-pools.go"
+Test1
+Test2
+worker 3 started job 3
+worker 1 started job 1
+worker 2 started job 2
+worker 2 finished job 2
+worker 2 started job 4
+worker 1 finished job 1
+worker 1 started job 5
+worker 3 finished job 3
+worker 1 finished job 5
+worker 2 finished job 4
+Test3
+cost=[2.0199268s]
 
 ## 35-WaitGroup
 
+想要等待多个协程完成，我们可以使用 *wait group*。
+
+```go
+package main
+
+import (
+	"fmt"
+	"sync"
+	"time"
+)
+
+// 每个协程都会运行该函数。 注意，WaitGroup 必须通过指针传递给函数。
+func worker(id int, wg *sync.WaitGroup) {
+
+	// return 时，通知 WaitGroup，当前协程的工作已经完成。
+	defer wg.Done()
+
+	fmt.Printf("Worker %d starting\n", id)
+
+	// 睡眠一秒钟，以此来模拟耗时的任务。
+	time.Sleep(time.Second)
+	fmt.Printf("Worker %d done\n", id)
+}
+
+func main() {
+
+	start := time.Now()
+
+	// WaitGroup 用于等待该函数启动的所有协程。
+	var wg sync.WaitGroup
+
+	// 启动几个协程，并为其递增 WaitGroup 的计数器
+	for i := 1; i <= 5; i++ {
+		wg.Add(1)
+		go worker(i, &wg)
+	}
+
+	fmt.Println("Test")
+
+	// 阻塞，直到 WaitGroup 计数器恢复为 0； 即所有协程的工作都已经完成。
+	wg.Wait()
+
+	cost := time.Since(start)
+	fmt.Printf("cost=[%s]", cost)
+}
+```
+
+每次运行，各个协程开启和完成的时间可能是不同的。
+
+PS D:\Coding-cf\Go\GoByExample\select> go run "d:\Coding-cf\Go\GoByExample\waitgroups\waitgroups.go"
+Worker 2 starting
+Worker 3 starting
+Test
+Worker 5 starting
+Worker 4 starting
+Worker 1 starting
+Worker 1 done
+Worker 3 done
+Worker 4 done
+Worker 2 done
+Worker 5 done
+cost=[1.009809s]
+
 ## 36-速率限制
+
+**速率限制** 是控制服务资源利用和质量的重要机制。 *基于协程、通道和打点器，Go 优雅的支持速率限制*。
+
+```go
+package main
+
+import (
+	"fmt"
+	"time"
+)
+
+func main() {
+
+	start := time.Now()
+
+	// 首先，我们将看一个基本的速率限制。
+	// 假设我们想限制对收到请求的处理，我们可以通过一个通道处理这些请求
+	requests := make(chan int, 5)
+	for i := 1; i <= 5; i++ {
+		requests <- i
+	}
+	close(requests)
+
+	// limiter 通道每 200ms 接收一个值。 这是我们任务速率限制的调度器。
+	limiter := time.Tick(200 * time.Millisecond)
+
+	// 通过在每次请求前阻塞 limiter 通道的一个接收，
+	// 可以将频率限制为，每 200ms 执行一次请求。
+	for req := range requests {
+		<-limiter
+		fmt.Println("request", req, time.Now())
+	}
+
+	// 有时候我们可能希望在速率限制方案中允许短暂的并发请求，
+	// 并同时保留总体速率限制。 我们可以通过缓冲通道来完成此任务。
+	// burstyLimiter 通道允许最多 3 个爆发（bursts）事件。
+	burstLimiter := make(chan time.Time, 3)
+
+	// 填充通道，表示允许的爆发（bursts）。
+	for i := 0; i < 3; i++ {
+		burstLimiter <- time.Now()
+	}
+
+	// 每 200ms 我们将尝试添加一个新的值到 burstyLimiter中， 直到达到 3 个的限制。
+	go func() {
+		for t := range time.Tick(200 * time.Millisecond) {
+			burstLimiter <- t
+		}
+	}()
+
+	// 现在，模拟另外 5 个传入请求。 受益于 burstyLimiter 的爆发（bursts）能力，
+	// 前 3 个请求可以快速完成。
+	burstRequests := make(chan int, 5)
+	for i := 1; i <= 5; i++ {
+		burstRequests <- i
+	}
+	close(burstRequests)
+	for req := range burstRequests {
+		<-burstLimiter
+		fmt.Println("request", req, time.Now())
+	}
+
+	cost := time.Since(start)
+	fmt.Printf("cost=[%s]", cost)
+}
+```
+
+运行程序，我们看到第一批请求意料之中的大约每 200ms 处理一次。
+
+PS D:\Coding-cf\Go\GoByExample\select> go run "d:\Coding-cf\Go\GoByExample\rate-limiting\rate-limiting.go"
+request 1 2021-11-26 15:54:52.7125512 +0800 CST m=+0.218740401
+request 2 2021-11-26 15:54:52.9143874 +0800 CST m=+0.420576601
+request 3 2021-11-26 15:54:53.116389 +0800 CST m=+0.622578201
+request 4 2021-11-26 15:54:53.3061452 +0800 CST m=+0.812334401
+request 5 2021-11-26 15:54:53.5101447 +0800 CST m=+1.016333901
+request 1 2021-11-26 15:54:53.5101447 +0800 CST m=+1.016333901
+request 2 2021-11-26 15:54:53.5101447 +0800 CST m=+1.016333901 
+request 3 2021-11-26 15:54:53.5101447 +0800 CST m=+1.016333901 
+request 4 2021-11-26 15:54:53.7157193 +0800 CST m=+1.221908501
+request 5 2021-11-26 15:54:53.9223151 +0800 CST m=+1.428504301
+cost=[1.4199199s]
+
+第二批请求，由于爆发（burstable）速率控制，我们直接连续处理了 3 个请求， 然后以大约每 200ms 一次的速度，处理了剩余的 2 个请求。
 
 ## 37-原子计数器
 
+Go 中最主要的状态管理机制是依靠通道间的通信来完成的。 我们已经在工作池的例子中看到过，并且，还有一些其他的方法来管理状态。 这里，我们来看看如何使用 `sync/atomic` 包在多个协程中进行 _原子计数_。
+
+```go
+package main
+
+import (
+	"fmt"
+	"sync"
+	"sync/atomic"
+	"time"
+)
+
+func main() {
+
+	start := time.Now()
+
+	// 我们将使用一个无符号整型（永远是正整数）变量来表示这个计数器。
+	var ops uint64
+
+	// WaitGroup 帮助我们等待所有协程完成它们的工作。
+	var wg sync.WaitGroup
+
+	// 我们会启动 50 个协程，并且每个协程会将计数器递增 1000 次。
+	for i := 0; i < 50; i++ {
+		wg.Add(1)
+
+		go func() {
+			for c := 0; c < 1000; c++ {
+
+				// 使用 AddUint64 来让计数器自动增加，
+				// 使用 & 语法给定 ops 的内存地址。
+				atomic.AddUint64(&ops, 1)
+
+				// 由于多个协程会互相干扰，运行时值会改变，可能会导致我们得到一个不同的数字
+				// ops++
+			}
+			wg.Done()
+		}()
+	}
+
+	// 等待，直到所有协程完成。
+	wg.Wait()
+
+	// 现在可以安全的访问 ops，因为我们知道，此时没有协程写入 ops， 此外，
+	// 还可以使用 atomic.LoadUint64 之类的函数，在原子更新的同时安全地读取它们。
+	fmt.Println("ops:", ops)
+
+	cost := time.Since(start)
+	fmt.Printf("cost=[%s]", cost)
+}
+```
+
+PS D:\Coding-cf\Go\GoByExample\atomic-counters> go run "d:\Coding-cf\Go\GoByExample\atomic-counters\atomic-counters.go"
+ops: 50000
+cost=[1.0355ms]
+
+预计会进行 `50,000` 次操作。如果我们使用非原子的 `ops++` 来增加计数器， 由于多个协程会互相干扰，运行时值会改变，可能会导致我们得到一个不同的数字。 此外，运行程序时带上 `-race` 标志，我们可以获取数据竞争失败的详情
+
+PS D:\Coding-cf\Go\GoByExample\atomic-counters> go run atomic-counters.go -race      
+ops: 49157
+cost=[0s]
+
+接下来，我们看一下管理状态的另一个工具——互斥锁。
+
 ## 38-互斥锁
 
-## 39-状态协程
+在前面的例子中，我们看到了如何使用原子操作来管理简单的计数器。 对于更加复杂的情况，我们可以使用一个**互斥锁** 来在 Go 协程间安全的访问数据。
+
+```go
+package main
+
+import (
+	"fmt"
+	"math/rand"
+	"sync"
+	"sync/atomic"
+	"time"
+)
+
+func main() {
+
+	start := time.Now()
+
+	// 在这个例子中，state 是一个 map。
+	var state = make(map[int]int)
+
+	// mutex 将同步对 state 的访问。
+	var mutex = &sync.Mutex{}
+
+	// 我们会持续追踪读写操作的数量。
+	var readOps uint64
+	var writeOps uint64
+
+	// 这里我们启动 100 个协程， 每个协程以每 1ms 一次的频率来重复读取 state。
+	for r := 0; r < 100; r++ {
+		go func() {
+			total := 0
+			for {
+				// 每次循环读取，我们使用一个键来进行访问，
+				// Lock() 这个 mutex 来确保对 state 的独占访问，
+				// 读取选定的键的值，Unlock() 这个 mutex，
+				// 并将 ops 值加 1。
+				key := rand.Intn(5)
+				mutex.Lock()
+				total += state[key]
+				mutex.Unlock()
+				atomic.AddUint64(&readOps, 1)
+
+				// 在下次读取前等待片刻。
+				time.Sleep(time.Millisecond)
+			}
+		}()
+	}
+
+	// 同样的，我们启动 10 个协程来模拟写入操作， 使用和读取相同的模式。
+
+	for w := 0; w < 10; w++ {
+		go func() {
+			for {
+				key := rand.Intn(5)
+				val := rand.Intn(100)
+				mutex.Lock()
+				state[key] = val
+				mutex.Unlock()
+				atomic.AddUint64(&writeOps, 1)
+				time.Sleep(time.Millisecond)
+			}
+		}()
+	}
+
+	// 让这 10 个协程对 state 和 mutex 的操作持续 1 s。
+	time.Sleep(time.Second)
+
+	// 获取并输出最终的操作计数。
+	readOpsFinal := atomic.LoadUint64(&readOps)
+	fmt.Println("readOps:", readOpsFinal)
+	writeOpsFinal := atomic.LoadUint64(&writeOps)
+	fmt.Println("writeOps:", writeOpsFinal)
+
+	// 对 state 使用一个最终的锁，展示它是如何结束的。
+	mutex.Lock()
+	fmt.Println("state:", state)
+	mutex.Unlock()
+
+	cost := time.Since(start)
+	fmt.Printf("cost=[%s]", cost)
+}
+```
+
+**Question**：*导致教程、PC、The Go Playground运行结果不一致的原因？*
+
+> GoByExample 教程中的运行结果
+
+运行这个程序，显示我们进行了大约 90,000 次 mutex 同步的 state 操作。
+
+```shell
+$ go run mutexes.go
+readOps: 83285
+writeOps: 8320
+state: map[1:97 4:53 0:33 2:15 3:2]
+```
+
+> PC运行结果
+
+PS D:\Coding-cf\Go\GoByExample\atomic-counters> go run "d:\Coding-cf\Go\GoByExample\mutexes\mutexes.go"
+readOps: 6557
+writeOps: 660
+state: map[0:28 1:8 2:50 3:78 4:9]
+cost=[1.0066632s]
+
+> The Go Playground运行结果
+
+readOps: 100001
+writeOps: 10000
+state: map[0:94 1:87 2:53 3:90 4:8]
+cost=[1s]
+
+接下来我们将看一下，*只使用协程和通道， 如何实现相同的任务状态管理*。
+
+## 39-状态协程 思考🤔
+
+在前面的例子中，我们用 互斥锁 进行了明确的锁定， 来让共享的 state 跨多个 Go 协程同步访问。 另一个选择是，*使用内建协程和通道的同步特性来达到同样的效果*。 **Go 共享内存的思想是**，*通过通信使每个数据仅被单个协程所拥有，即**通过通信实现共享内存***。 基于通道的方法与该思想完全一致！
+
+```go
+package main
+
+import (
+	"fmt"
+	"math/rand"
+	"sync/atomic"
+	"time"
+)
+
+// 在这个例子中，state 将被一个单独的协程拥有。
+// 这能保证数据在并行读取时不会混乱。 为了对 state 进行读取或者写入，
+// 其它的协程将发送一条数据到目前拥有数据的协程中，
+// 然后等待接收对应的回复。 结构体 readOp 和 writeOp 封装了这些请求，
+// 并提供了响应协程的方法。
+
+type readOp struct {
+	key  int
+	resp chan int
+}
+
+type writeOp struct {
+	key  int
+	val  int
+	resp chan bool
+}
+
+func main() {
+
+	start := time.Now()
+
+	// 和前面的例子一样，我们会计算操作执行的次数。
+	var readOps uint64
+	var writeOps uint64
+
+	// 其他协程将通过 reads 和 writes 通道来发布 读 和 写 请求。
+	reads := make(chan readOp)
+	writes := make(chan writeOp)
+
+	// 这就是拥有 state 的那个协程， 和前面例子中的 map 一样，
+	// 不过这里的 state 是被这个状态协程私有的。
+	// 这个协程不断地在 reads 和 writes 通道上进行选择，
+	// 并在请求到达时做出响应。 首先，执行请求的操作；然后，执行响应，
+	// 在响应通道 resp 上发送一个值，
+	// 表明请求成功（reads 的值则为 state 对应的值）。
+	go func() { // 此协程的运行机制是什么？
+		var state = make(map[int]int)
+		for {
+			select {
+			case read := <-reads:
+				read.resp <- state[read.key]
+			case write := <-writes:
+				state[write.key] = write.val
+				write.resp <- true
+			}
+		}
+	}()
+
+	// 启动 100 个协程通过 reads 通道向拥有 state 的协程发起读取请求。
+	// 每个读取请求需要构造一个 readOp，发送它到 reads 通道中，
+	// 并通过给定的 resp 通道接收结果。
+
+	for r := 0; r < 100; r++ {
+		go func() {
+			for {
+				read := readOp{
+					key:  rand.Intn(5),
+					resp: make(chan int),
+				}
+				reads <- read // 发送数据
+				<-read.resp
+				atomic.AddUint64(&readOps, 1)
+				time.Sleep(time.Millisecond)
+			}
+		}()
+	}
+
+	// 用相同的方法启动 10 个写操作。
+	for w := 0; w < 10; w++ {
+		go func() {
+			for {
+				write := writeOp{
+					key:  rand.Intn(5),
+					val:  rand.Intn(100),
+					resp: make(chan bool),
+				}
+				writes <- write
+				<-write.resp
+				atomic.AddUint64(&writeOps, 1)
+				time.Sleep(time.Millisecond)
+			}
+		}()
+	}
+
+	// 让协程们跑 1s。
+	time.Sleep(time.Second)
+
+	// 最后，获取并报告 ops 值。
+	readOpsFinal := atomic.LoadUint64(&readOps)
+	fmt.Println("readOps:", readOpsFinal)
+	writeOpsFinal := atomic.LoadUint64(&writeOps)
+	fmt.Println("writeOps:", writeOpsFinal)
+
+	cost := time.Since(start)
+	fmt.Printf("cost=[%s]", cost)
+}
+```
+
+运行这个程序显示这个基于协程的状态管理的例子 达到了每秒大约 80,000 次操作。
+
+> GoByExample 教程中的运行结果
+
+```shell
+$ go run stateful-goroutines.go
+readOps: 71708
+writeOps: 7177
+```
+
+> PC运行结果
+
+PS D:\Coding-cf\Go\GoByExample\atomic-counters> go run "d:\Coding-cf\Go\GoByExample\stateful-goroutines\stateful-goroutines.go"
+readOps: 6589
+writeOps: 660
+
+> The Go Playground运行结果
+
+readOps: 100099
+writeOps: 10010
+cost=[1s]
+
+通过这个例子我们可以看到，**基于协程的方法比基于互斥锁的方法要复杂得多**。 但是，在某些情况下它可能很有用， 例如，当你涉及其他通道，或者管理多个同类互斥锁时，会很容易出错。 *您应该使用最自然的方法，尤其是在理解程序正确性方面。*
 
 ## 40-排序
 
+Go 的 sort 包实现了内建及用户自定义数据类型的排序功能。 我们先来看看内建数据类型的排序。
+
+```go
+package main
+
+import (
+	"fmt"
+	"sort"
+)
+
+func main() {
+
+	// 排序方法是针对内置数据类型的； 这是一个字符串排序的例子。
+	// 注意，它是原地排序的，所以他会直接改变给定的切片，
+	// 而不是返回一个新切片。
+	strs := []string{"c", "a", "b"}
+	sort.Strings(strs)
+	fmt.Println("Strings:", strs)
+
+	// 一个 int 排序的例子。
+	ints := []int{7, 2, 4}
+	sort.Ints(ints)
+	fmt.Println("Ints: ", ints)
+
+	// 我们也可以使用 sort 来检查一个切片是否为有序的。
+	s := sort.IntsAreSorted(ints)
+	fmt.Println("Sorted: ", s)
+}
+```
+
+运行程序，打印排序好的字符串和整型切片， 以及数组是否有序的检查结果：true。
+
+PS D:\Coding-cf\Go\GoByExample\atomic-counters> go run "d:\Coding-cf\Go\GoByExample\sorting\sorting.go"
+Strings: [a b c]
+Ints:  [2 4 7]
+Sorted:  true
+
 ## 41-使用函数自定义排序
+
+有时候，我们可能想根据自然顺序以外的方式来对集合进行排序。 例如，假设我们要按字符串的长度而不是按字母顺序对它们进行排序。 这儿有一个在 Go 中自定义排序的示例。
+
+
 
 ## 42-Panic
 

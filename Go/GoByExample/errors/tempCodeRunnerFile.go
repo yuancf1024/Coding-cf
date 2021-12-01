@@ -48,16 +48,12 @@ func main() {
 	for _, i := range []int{7, 42} {
 		if r, e := f2(i); e != nil {
 			fmt.Println("f2 failed:", e)
-			fmt.Println(e) // Test
 		} else {
 			fmt.Println("f2 worked:", r)
 		}
 	}
 
 	_, e := f2(42)
-	fmt.Println("***Test***") // test
-	// fmt.Println(e)
-	// fmt.Println(e.(*argError))
 	if ae, ok := e.(*argError); ok {
 		fmt.Println(ae.arg)
 		fmt.Println(ae.prob)
@@ -65,7 +61,6 @@ func main() {
 		fmt.Println(ok) // test
 		fmt.Println(e.(*argError))
 		fmt.Println(e)
-		fmt.Println(ae)
-		// fmt.Println(e.arg, e.prob)
+
 	}
 }
