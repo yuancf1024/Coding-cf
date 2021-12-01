@@ -52,3 +52,104 @@ func twoSum(nums []int, target int) []int {
 }
 ```
 
+### 026-Remove Duplicates from Sorted Array
+
+**题目大意** 
+
+给定一个有序数组 nums，对数组中的元素进行去重，使得原数组中的每个元素只有一个。最后返回去重以后数组的长度值。
+
+**Clarification 说明**
+
+为什么返回值是整数而你的答案是数组?  
+ 
+注意，输入数组是通过引用传入的，这意味着对输入数组的修改也会被调用者知道。  
+ 
+在内部你可以这样想:  
+
+```c++
+// nums is passed in by reference. (i.e., without making a copy)
+int len = removeElement(nums, val);
+
+// any modification to nums in your function would be known by the caller.
+// using the length returned by your function, it prints the first len elements.
+for (int i = 0; i < len; i++) {
+    print(nums[i]);
+}
+```
+
+**示例 1：**
+
+输入：nums = [1,1,2]
+输出：2, nums = [1,2]
+解释：函数应该返回新的长度 2 ，并且原数组 nums 的前两个元素被修改为 1, 2 。不需要考虑数组中超出新长度后面的元素。
+
+**示例 2：**
+
+输入：nums = [0,0,1,1,1,2,2,3,3,4]
+输出：5, nums = [0,1,2,3,4]
+解释：函数应该返回新的长度 5 ， 并且原数组 nums 的前五个元素被修改为 0, 1, 2, 3, 4 。不需要考虑数组中超出新长度后面的元素。
+
+**解题思路**
+这道题和第 27 题很像。这道题和第 283 题，第 27 题基本一致，283 题是删除 0，27 题是删除指定元素，这一题是删除重复元素，实质是一样的。
+
+*这里数组的删除并不是真的删除，只是将删除的元素移动到数组后面的空间内，然后返回数组实际剩余的元素个数*，OJ 最终判断题目的时候会读取数组剩余个数的元素进行输出。
+
+```go
+// 解法1
+
+func removeDuplicates(nums []int) int {
+    if len(nums) == 0 {
+        return 0
+    }
+    last, finder := 0, 0
+    for last < len(nums)-1 {
+        for nums[finder] == nums[last] {
+            finder++
+            if finder == len(nums) {
+                return last + 1
+            }
+        }
+        nums[last+1] = nums[finder]
+        last++
+    }
+    return last + 1
+}
+
+// 解法2
+func removeDuplicates1(nums []int) int {
+    if len(nums) == 0 {
+        return 0
+    }
+    length := len(nums)
+    lastNum := nums[length-1]
+    i := 0
+    for i = 0; i < length-1; i++ {
+        if nums[i] == lastNum {
+            break
+        }
+        if nums[i+1] == nums[i] {
+            removeElement1(nums, i+1, nums[i])
+            // fmt.Printf("此时 num = %v length = %v\n", nums, length)
+        }
+    }
+    return i + 1
+}
+
+func removeElement1(nums []int, start, val int) int {
+    if len(nums) == 0 {
+        return 0
+    }
+    j := start
+    for i := start; i < len(nums); i++ {
+        if nums[i] != val {
+            if i != j {
+                nums[i], nums[j] = nums[j], nums[i]
+                j++
+            } else {
+                j++
+            }
+        }
+    }
+    return j
+}
+```
