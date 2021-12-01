@@ -5,8 +5,11 @@
 ## 更新记录
 
 - [x] 2021-11-11 创建Go-algorithm
+- [x] 2021-12-01 开始一点点
 - [ ] 
 ## Readme
+
+参考阿里霜神的[Leetcode-cookbook](https://books.halfrost.com/leetcode) 
 
 # 数据结构基础
 
@@ -14,7 +17,7 @@
 
 # leetcode-go
 
-## Array
+## 01-Array
 
 ### 001-Two Sum
 
