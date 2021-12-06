@@ -177,3 +177,55 @@ func removeDuplicates(nums []int) int {
     return slow
 }
 ```
+
+**复杂度分析**
+
+* 时间复杂度：$O(n)$，其中 n 是数组的长度。快指针和慢指针最多各移动 n 次。
+* 空间复杂度：$O(1)$。只需要使用常数的额外空间。
+
+### 027-Remove Element
+
+给定一个数组 nums 和一个数值 val，将数组中所有等于 val 的元素删除，并返回剩余的元素个数。
+
+**解题思路**
+这道题和第 283 题很像。这道题和第 283 题基本一致，283 题是删除 0，这一题是给定的一个 val，实质是一样的。
+
+这里数组的删除并不是真的删除，只是将删除的元素移动到数组后面的空间内，然后返回数组实际剩余的元素个数，OJ 最终判断题目的时候会读取数组剩余个数的元素进行输出。
+
+```go
+// 自己写的
+func removeElement(nums []int, val int) int {
+    if len(nums) == 0 {
+        return 0
+    }
+    slow, fast := 0, 0
+    for fast < len(nums) {
+        if nums[fast] != val {
+            nums[slow] = nums[fast]
+            slow++
+        }
+        fast++
+    }
+    return slow
+}
+
+// 修改打磨版本
+func removeElement(nums []int, val int) int {
+    n := len(nums)
+    if n == 0 {
+        return 0
+    }
+    // slow, fast := 0, 0
+    slow := 0
+    for fast := 0; fast < n; fast++ {
+        if nums[fast] != val {
+            nums[slow] = nums[fast]
+            slow++
+        }
+    }
+    return slow
+}
+
+// 官方题解：
+```
+
