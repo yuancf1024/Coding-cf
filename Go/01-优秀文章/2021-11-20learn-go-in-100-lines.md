@@ -44,15 +44,147 @@ func main() {
 PS D:\Coding-cf> go run "d:\Coding-cf\Go\01-优秀文章\learn-go-in-100-lines\hello_world\hello_world.go"
 Hello, world
 
-首先要注意的是，每个 Go 程序都组织在一个包中。包只是同一目录中的源文件的集合，允许变量、类型和函数在同一包内的其他源文件中可见。对于可执行程序入口文件，包名为 main，但文件名由程序员决定。
+首先要注意的是，每个 Go 程序都组织在一个包中。包只是同一目录中的源文件的集合，允许变量、类型和函数在同一包内的其他源文件中可见。对于可执行程序入口文件，包名为 `main`，但文件名由程序员决定。
 
-接下来，我们导入实现格式化 I/O 的包 "fmt"，并使用 `fmt.Println()` 函数将默认格式写入标准输出，以及针对需要更大灵活性时的 fmt.Printf() 函数。
+接下来，我们导入实现格式化 I/O 的包 `"fmt"`，并使用 `fmt.Println()` 函数将默认格式写入标准输出，以及针对需要更大灵活性时的 `fmt.Printf()` 函数。
 
-最后，在main函数体中，我们调用fmt.Println() 输出传递给它的参数，即 Hello, world。请注意，main 函数不接受任何参数且不返回任何值。与main包类似，main 函数是可执行程序必须的。
+最后，在`main`函数体中，我们调用`fmt.Println()` 输出传递给它的参数，即 Hello, world。请注意，`main` 函数不接受任何参数且不返回任何值。与`main`包类似，`main` 函数是可执行程序必须的。
 
-要运行该程序，我们需要将源代码及其依赖项编译为可执行的二进制文件。我们通过在包目录中打开命令行终端并运行 go build，后跟源文件的名称进行编译。
+要运行该程序，我们需要将源代码及其依赖项编译为可执行的二进制文件。我们通过在包目录中打开命令行终端并运行 `go build`，后跟源文件的名称进行编译。
+
+$ go build hello_world.go
+
+要执行二进制文件，请键入 ./ 后跟二进制文件的名称。
+
+$ ./hello_world
+
+// output
+Hello, world
+
+另一种选择是 `go run`  后跟源文件的名称。这将结合上面概述的两个步骤并产生相同的结果，*但是，不会在工作目录中保存任何可执行文件。这种方法主要用于一次性代码片段和将来不太可能需要的实验代码。*
 
 ## 03 100行代码基础知识
+
+在接下来的 100 行代码中，我们将通过几个示例来说明 Go 的特性。我们将介绍*如何声明变量、了解 Go 的内置类型、处理数组和切片、介绍 map 以及控制流*。此外，会用额外的代码行介绍*指针、结构体和 Go 对并发*的内置支持。
+
+### 变量
+
+*在编写 Go 程序时，必须先声明变量，然后才能使用它们*。下面的示例显示了如何声明单个变量或一组变量。为了节省空间，输出显示为行内注释。
+
+```go
+package main
+
+import "fmt"
+
+/*声明单个变量*/
+
+var a int
+
+/*声明一组变量*/
+
+var (
+	b bool
+	c float32
+	d string
+)
+
+func main() {
+	a = 42            // 单个变量赋值
+	b, c = true, 32.0 // 多个变量赋值
+	d = "string"      // 字符串必须包含双引号
+	fmt.Println(a, b, c, d) // 42 true 32 string
+}
+```
+
+请注意每个变量声明后是如何跟随该变量的类型。在下一节介绍类型之前，请注意，当需要在代码中引入常量时，需要将 `var` 关键字替换为 `const`。
+
+在声明变量时，另一种选择是使用 `:= `*运算符一次性初始化和分配变量*。这称为*短变量声明*。让我们重构上面的代码来说明这一点。
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+ a := 42            // Initialize and assign to a single variable
+ b, c := true, 32.0 // Initialize and assign to multiple variables
+ d := "string"
+ fmt.Println(a, b, c, d) // 42 true 32 string
+}
+```
+
+简短的变量声明使我们的代码更简洁，因此我们将在本文中再次看到它。
+
+### 类型
+
+Go 提供了丰富的类型集合，包括数字、布尔值、字符串、error 以及创建自定义类型的能力。字符串是用双引号括起来的一系列 UTF-8 字符。数字类型是最多的，有符号 (  `int` ) 和无符号 (  `uint` ) 整数的 8、16、32和 64 位变体。
+
+`byte` 是 `uint8` 的别名。`rune` 是 `int32` 的别名。`float`（浮点数）是 `float32` 或 `float64`。也支持复数，可以表示为 `complex128` 或 `complex64`。
+
+当声明一个变量而未赋值时，会自动分配一个该类型的零值。例如，`var k int`，`k` 的值为 0。`var s string`，`s` 的值为 `""`。下面的示例显示了用户指定的类型与使用短变量声明分配的默认类型之间的区别。
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+	// 用户自定义类型
+	const a int32 = 12 // 32位整数
+	const b float32 = 20.5 // 32位浮点数
+	var c complex128 = 1 + 4i // 128位复数
+	var d uint16 = 14 // 16位无符号整数
+
+	// 默认类型
+	n := 42 // 整数
+	pi := 3.14 // 浮点数
+	x, y := true, false // 布尔类型
+	z := "Go is awesome" // 字符串
+
+	fmt.Printf("user-specified types:\n %T %T %T %T\n", a, b, c, d)
+	fmt.Printf("default types:\n %T %T %T %T %T\n", n, pi, x, y, z)
+}
+```
+
+注意 `fmt.Printf()` 第一个参数中的占位符 `%T`。在 Go 中，这称为动词，它代表传递的变量的类型。`\n` 在输出的末尾引入一个新行。`fmt.Printf()` 有许多其他动词，包括 `%d` 十进制整数、`%s` 字符串、`%f` 浮点数、`%t` 布尔、`%v` 值以及类型的任何自然值。
+
+另一件要注意的事情是， `int` 占用空间到底是 `int32` 还是 `int64`，取决于底层系统。运行代码示例以查看正在运行的类型和格式动词。
+
+PS D:\Coding-cf\Go\01-优秀文章\learn-go-in-100-lines\hello_world> go run "d:\Coding-cf\Go\01-优秀文章\learn-go-in-100-lines\types\types.go"
+user-specified types:
+ int32 float32 complex128 uint16
+default types:
+ int float64 bool bool string
+
+### 数组
+
+使用数组、切片和 map（Go 版本的 hashmap）可以实现在列表中存储多个元素。我们将在下面的示例中考虑这三个类型。*数组由它们的固定大小和所有元素的通用数据类型定义。*有趣的是，*数组的大小是类型的一部分，这意味着数组不能增长或缩小，否则它们将具有不同的类型。使用方括号访问数组元素*。下面的例子展示了如何声明一个包含字符串的数组以及循环遍历它的元素。
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+	// 定义一个大小为4的数组，存储可部署的选项
+	var DeploymentOptions = [4]string{"R-pi", "AWS", "GCP", "Azure"}
+
+	// 循环遍历可部署选项数组
+	for i := 0; i < len(DeploymentOptions); i++ {
+		option := DeploymentOptions[i]
+		fmt.Println(i, option)
+	}
+}
+```
+
+请注意循环条件没有括号。在这个例子中，我们遍历数组输出当前索引和存储在该索引处的值。运行代码会产生以下输出。
+
+PS D:\Coding-cf\Go\01-优秀文章\learn-go-in-100-lines\hello_world> go run "d:\Coding-cf\Go\01-优秀文章\learn-go-in-100-lines\array\array.go"
+0 R-pi
+1 AWS
+2 GCP
+3 Azure
+
 
 
 ## 04 超越基础知识
