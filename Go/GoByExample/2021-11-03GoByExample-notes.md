@@ -10,6 +10,7 @@
 - [x] 2021-11-24 21
 - [x] 2021-11-25 22~26
 - [x] 2021-11-26 27~40 有一些没有完全消化，需要对照相应资料深入理解和思考
+- [x] 2021-12-13 41~53
 - [ ] 
 
 ## Readme
@@ -407,7 +408,7 @@ Don't know type string
 
 ## 8-数组
 
-在 Go 中，**数组** 是一个具有编号且长度固定的元素序列。
+在 Go 中，**数组** 是一个具***有编号且长度固定***的元素序列。
 
 ```go
 package main
@@ -2444,31 +2445,1022 @@ Sorted:  true
 
 有时候，我们可能想根据自然顺序以外的方式来对集合进行排序。 例如，假设我们要按字符串的长度而不是按字母顺序对它们进行排序。 这儿有一个在 Go 中自定义排序的示例。
 
+```go
+package main
 
+import (
+	"fmt"
+	"sort"
+)
+
+// 为了在 Go 中使用自定义函数进行排序，我们需要一个对应的类型。 
+// 我们在这里创建了一个 byLength 类型，它只是内建类型 []string 的别名。
+type byLength []string
+
+// 我们为该类型实现了 sort.Interface 接口的 Len、Less 和 Swap 方法， 
+// 这样我们就可以使用 sort 包的通用 Sort 方法了， Len 和 Swap 在各个类型中的实现都差不多， 
+// Less 将控制实际的自定义排序逻辑。 
+// 在这个的例子中，我们想按字符串长度递增的顺序来排序， 
+// 所以这里使用了 len(s[i]) 和 len(s[j]) 来实现 Less。
+func (s byLength) Len() int {
+	return len(s)
+}
+
+func (s byLength) Swap(i, j int) {
+	s[i], s[j] = s[j], s[i]
+}
+
+func (s byLength) Less(i, j int) bool {
+	return len(s[i]) < len(s[j])
+}
+
+func main() {
+	// 一切准备就绪后，我们就可以通过将切片 fruits 强转为 byLength 类型的切片， 
+	// 然后对该切片使用 sort.Sort 来实现自定义排序。
+	fruits := []string{"peach", "banana", "kiwi"}
+	sort.Sort(byLength(fruits))
+	fmt.Println(fruits)
+}
+```
+
+运行这个程序，和预期的一样， 显示了一个按照字符串长度排序的列表。
+
+PS D:\> go run "d:\Coding-cf\Go\GoByExample\sorting-by-functions\sorting-by-functions.go"
+[kiwi peach banana]
+
+类似的，参照这个例子，*创建一个自定义类型， 为它实现 Interface 接口的三个方法， 然后对这个自定义类型的切片调用 sort.Sort 方法， 我们就可以通过任意函数对 Go 切片进行排序了。*
 
 ## 42-Panic
 
+`panic` 意味着有些出乎意料的错误发生。 通常我们用它来表示程序正常运行中不应该出现的错误， 或者我们不准备优雅处理的错误。
+
+```go
+package main
+
+import "os"
+
+func main() {
+
+	// 我们将使用 panic 来检查这个站点上预期之外的错误。 
+	// 而该站点上只有一个程序：触发 panic。
+	panic("a problem")
+
+	// panic 的一种常见用法是：
+	// 当函数返回我们不知道如何处理（或不想处理）的错误值时，中止操作。 
+	// 如果创建新文件时遇到意外错误该如何处理？这里有一个很好的 panic 示例。
+
+	_, err := os.Create("/tmp/file")
+	if err != nil {
+		panic(err)
+	}
+}
+```
+
+运行程序将会导致 `panic`： 输出一个错误消息和协程追踪信息，并以非零的状态退出程序。
+
+PS D:\Coding-cf\Go\Go-algorithm\数据结构与算法之美\06_linkedlist> go run "d:\Coding-cf\Go\GoByExample\panic\panic.go"
+panic: a problem
+
+goroutine 1 [running]:
+main.main()
+        d:/Coding-cf/Go/GoByExample/panic/panic.go:9 +0x27
+exit status 2
+
+> *注意，与某些使用 exception 处理错误的语言不同， 在 Go 中，通常会尽可能的使用返回值来标示错误。*
+
 ## 43-Defer
+
+`Defer` *用于确保程序在执行完成后，会调用某个函数，一般是执行清理工作。* Defer 的用途跟其他语言的 `ensure` 或 `finally` 类似。
+
+```go
+package main
+
+import (
+	"fmt"
+	"os"
+)
+
+func main() {
+
+	// 假设我们想要创建一个文件、然后写入数据、
+	// 最后在程序结束时关闭该文件。 
+	// 这里展示了如何通过 defer 来做到这一切。
+
+	// 在 createFile 后立即得到一个文件对象， 
+	// 我们使用 defer 通过 closeFile 来关闭这个文件。 
+	// 这会在封闭函数（main）结束时执行，即 writeFile 完成以后。
+	f := createFile("/tmp/defer.txt")
+	defer closeFile(f)
+	writeFile(f)
+}
+
+func createFile(p string) *os.File {
+	fmt.Println("creating")
+	f, err := os.Create(p)
+	if err != nil {
+		panic(err)
+	}
+	return f
+}
+
+func writeFile(f *os.File) {
+	fmt.Println("writing")
+	fmt.Fprintln(f, "data")
+}
+
+// 关闭文件时，进行错误检查是非常重要的， 即使在 defer 函数中也是如此。
+func closeFile(f *os.File) {
+	fmt.Println("closing")
+	err := f.Close()
+
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "error: %v\n", err)
+		os.Exit(1)
+	}
+}
+
+// 写入文件的地址：D:\tmp
+```
+
+执行程序，确认写入数据后，文件已关闭。
+
+PS D:\Coding-cf\Go\Go-algorithm\数据结构与算法之美\06_linkedlist> go run "d:\Coding-cf\Go\GoByExample\defer\defer.go"
+creating
+writing
+closing
 
 ## 44-组合函数
 
+我们经常需要程序对数据集合执行操作， 例如选择满足给定条件的全部 item， 或通过自定义函数将全部 item 映射到一个新的集合。
+
+在其它语言中，通常会使用*泛型*数据结构和算法。 但 Go 不支持泛型，如果你的程序或者数据类型有需要，通常的做法是*提供函数集*。
+
+这是一些 `strings` 切片的组合函数示例。 你可以使用这些例子来构建自己的函数。 注意，在某些情况下，最简单明了的方法是： **直接内联操作方法集，而不是创建并调用帮助函数。**
+
+```go
+package main
+
+import (
+	"fmt"
+	"strings"
+)
+
+// Index 返回目标字符串 t 在 vs 中第一次出现位置的索引， 
+// 或者在没有匹配值时返回 -1。
+func Index(vs []string, t string) int {
+	for i, v := range vs {
+		if v == t {
+			return i
+		}
+	}
+	return -1
+}
+
+// Include 如果目标字符串 t 存在于切片 vs 中，则返回 true。
+func Include(vs []string, t string) bool {
+	return Index(vs, t) >= 0
+}
+
+// Any 如果切片 vs 中的任意一个字符串满足条件 f，则返回 true。
+func Any(vs []string, f func(string) bool) bool {
+	for _, v := range vs {
+		if f(v) {
+			return true
+		}
+	}
+	return false
+}
+
+// All 如果切片 vs 中的所有字符串都满足条件 f，则返回 true。
+func All(vs []string, f func(string) bool) bool {
+	for _, v := range vs {
+		if !f(v) {
+			return false
+		}
+	}
+	return true
+}
+
+// Filter 返回一个新的切片，新切片由原切片 vs 中满足条件 f 的字符串构成。
+func Filter(vs []string, f func(string) bool) []string {
+	vsf := make([]string, 0)
+	for _, v := range vs {
+		if f(v) {
+			vsf = append(vsf, v)
+		}
+	}
+	return vsf
+}
+
+// Map 返回一个新的切片，新切片的字符串由原切片 vs 中的字符串经过函数 f 映射后得到。
+func Map(vs []string, f func(string) string) []string {
+	vsm := make([]string, len(vs))
+	for i, v := range vs {
+		vsm[i] = f(v)
+	}
+	return vsm
+}
+
+func main() {
+
+	// 试试各种组合函数。
+	var strs = []string{"peach", "apple", "pear", "plum"}
+
+	fmt.Println(Index(strs, "pear"))
+
+	fmt.Println(Include(strs, "grape"))
+
+	fmt.Println(Any(strs, func(v string) bool {
+		return strings.HasPrefix(v, "p") 
+		// HasPrefix tests whether the string s begins with prefix.
+	}))
+
+	fmt.Println(All(strs, func(v string) bool {
+		return strings.HasPrefix(v, "p")
+	}))
+
+	fmt.Println(Filter(strs, func(v string) bool {
+		return strings.Contains(v, "e")
+	}))
+
+	fmt.Println(Map(strs, strings.ToUpper))
+	// 上面的例子都是用的匿名函数，当前，你也可以使用正确类型的命名函数
+}
+```
+
+PS D:\Coding-cf\Go\Go-algorithm\数据结构与算法之美\06_linkedlist> go run "d:\Coding-cf\Go\GoByExample\collection-functions\collection-functions.go"
+2
+false
+true
+false
+[peach apple pear]
+[PEACH APPLE PEAR PLUM]
+
 ## 45-字符串函数
+
+标准库的 `strings` 包提供了很多有用的字符串相关的函数。 这儿有一些用来让你对 `strings` 包有一个初步了解的例子。
+
+```go
+package main
+
+import (
+	"fmt"
+	s "strings"
+)
+
+// 我们给 fmt.Println 一个较短的别名， 因为我们随后会大量的使用它。
+var p = fmt.Println
+
+// 这是一些 strings 中有用的函数例子。 由于它们都是包的函数，
+// 而不是字符串对象自身的方法， 这意味着我们需要在调用函数时，
+// 将字符串作为第一个参数进行传递。 
+// 你可以在 strings 包文档中找到更多的函数。
+func main() {
+	p("Contains: ", s.Contains("test", "es"))
+	p("Count: ", s.Count("test", "t"))
+	p("HasPrefix: ", s.HasPrefix("test", "te"))
+	p("HasSuffix: ", s.HasSuffix("test", "st"))
+	p("Index: ", s.Index("test", "e"))
+	p("Join: ", s.Join([]string{"a", "b"}, "-"))
+	p("Repeat: ", s.Repeat("a", 5))
+	p("Replace: ", s.Replace("foo", "o", "0", -1))
+	p("Replace: ", s.Replace("foo", "o", "0", 1))
+	p("Split: ", s.Split("a-b-c-d-e", "-"))
+	p("ToLower:", s.ToLower("TEST"))
+	p("ToUpper: ", s.ToUpper("test"))
+	p()
+
+	// 虽然不是 strings 的函数，但仍然值得一提的是， 
+	// 获取字符串长度（以字节为单位）以及通过索引获取一个字节的机制。
+	p("Len: ", len("hello"))
+	p("Char: ", "ahello"[0])
+	// 注意，上面的 len 以及索引工作在字节级别上。 
+	// Go 使用 UTF-8 编码字符串，因此通常按原样使用。 
+	// 如果您可能使用多字节的字符，则需要使用可识别编码的操作。 
+	// 详情请参考 strings, bytes, runes and characters in Go。
+}
+```
+
+PS D:\Coding-cf\Go\Go-algorithm\数据结构与算法之美\06_linkedlist> go run "d:\Coding-cf\Go\GoByExample\string-functions\string-functions.go"
+Contains:  true
+Count:  2
+HasPrefix:  true
+HasSuffix:  true
+Index:  1
+Join:  a-b
+Repeat:  aaaaa
+Replace:  f00
+Replace:  f0o
+Split:  [a b c d e]
+ToLower: test
+ToUpper:  TEST
+
+Len:  5
+Char:  97
 
 ## 46-字符串格式化
 
+Go 在传统的 printf 中对字符串格式化提供了优异的支持。 这儿有一些基本的*字符串格式化的任务*的例子。
+
+```go
+package main
+
+import (
+	"fmt"
+	"os"
+)
+
+type point struct {
+	x, y int
+}
+
+func main() {
+
+	// Go 提供了一些用于格式化常规值的打印“动词”。 
+	// 例如，这样打印 point 结构体的实例。
+	p := point{1, 2}
+	fmt.Printf("%v\n", p)
+
+	// 如果值是一个结构体，%+v 的格式化输出内容将包括结构体的字段名。
+	fmt.Printf("%+v\n", p)
+
+	// %#v 根据 Go 语法输出值，即会产生该值的源码片段。
+	fmt.Printf("%#v\n", p)
+
+	// 需要打印值的类型，使用 %T。
+	fmt.Printf("%T\n", p)
+
+	// 格式化布尔值很简单。
+	fmt.Printf("%t\n", true)
+
+	// 格式化整型数有多种方式，使用 %d 进行标准的十进制格式化。
+	fmt.Printf("%d\n", 123)
+
+	// 这个输出二进制表示形式。
+	fmt.Printf("%b\n", 14)
+
+	// 输出给定整数的对应字符。
+	fmt.Printf("%c\n", 33)
+
+	// %x 提供了十六进制编码。
+	fmt.Printf("%x\n", 456)
+
+	// 同样的，也为浮点型提供了多种格式化选项。 
+	// 使用 %f 进行最基本的十进制格式化。
+	fmt.Printf("%f\n", 78.9)
+
+	// %e 和 %E 将浮点型格式化为（稍微有一点不同的）科学记数法表示形式。
+	fmt.Printf("%e\n", 123400000.0)
+	fmt.Printf("%E\n", 123400000.0)
+
+	// 使用 %s 进行基本的字符串输出。
+	fmt.Printf("%s\n", "\"string\"")
+
+	// 像 Go 源代码中那样带有双引号的输出，使用 %q。
+	fmt.Printf("%q\n", "\"string\"")
+
+	// 和上面的整型数一样，%x 输出使用 base-16 编码的字符串， 
+	// 每个字节使用 2 个字符表示。
+	fmt.Printf("%x\n", "hex this")
+
+	// 要输出一个指针的值，使用 %p。
+	fmt.Printf("%p\n", &p)
+
+	// 格式化数字时，您经常会希望控制输出结果的宽度和精度。 
+	// 要指定整数的宽度，请在动词 “%” 之后使用数字。 
+	// 默认情况下，结果会右对齐并用空格填充。
+	fmt.Printf("|%6d|%6d|\n", 12, 345)
+
+	// 你也可以指定浮点型的输出宽度，
+	// 同时也可以通过 宽度.精度 的语法来指定输出的精度。
+	fmt.Printf("|%6.2f|%6.2f|\n", 1.2, 3.45)
+
+	// 要左对齐，使用 - 标志。
+	fmt.Printf("|%-6.2f|%-6.2f|\n", 1.2, 3.45)
+
+	// 你也许也想控制字符串输出时的宽度，
+	// 特别是要确保他们在类表格输出时的对齐。 这是基本的宽度右对齐方法。
+	fmt.Printf("|%6s|%6s|\n", "foo", "b")
+
+	// 要左对齐，和数字一样，使用 - 标志。
+	fmt.Printf("|%-6s|%-6s|\n", "foo", "b")
+
+	// 到目前为止，我们已经看过 Printf 了， 
+	// 它通过 os.Stdout 输出格式化的字符串。
+	//  Sprintf 则格式化并返回一个字符串而没有任何输出。
+	s := fmt.Sprintf("a %s", "string")
+
+	fmt.Println(s)
+
+	// 你可以使用 Fprintf 来格式化并输出到 io.Writers 而不是 os.Stdout。
+	fmt.Fprintf(os.Stderr, "an %s\n", "error")
+}
+```
+
+PS D:\Coding-cf\Go\Go-algorithm\数据结构与算法之美\06_linkedlist> go run "d:\Coding-cf\Go\GoByExample\string-formatting\string-formatting.go"
+{1 2}
+{x:1 y:2}
+main.point{x:1, y:2}
+main.point
+true
+123
+1110
+!
+1c8
+78.900000
+1.234000e+08
+1.234000E+08
+"string"
+"\"string\""
+6865782074686973
+0xc0000140a0
+|    12|   345|
+|  1.20|  3.45|
+|1.20  |3.45  |
+|   foo|     b|
+|foo   |b     |
+a string
+an error
+
 ## 47-正则表达式
+
+Go 提供了内建的[正则表达式](http://zh.wikipedia.org/wiki/%E6%AD%A3%E5%88%99%E8%A1%A8%E8%BE%BE%E5%BC%8F)支持。 这儿有一些在 Go 中与 regexp 相关的常见用法示例。
+
+```go
+package main
+
+import (
+	"bytes"
+	"fmt"
+	"regexp"
+)
+
+func main() {
+
+	// 测试一个字符串是否符合一个表达式。
+	match, _ := regexp.MatchString("p([a-z]+)ch", "peach")
+	fmt.Println(match)
+
+	// 上面我们是直接使用字符串，但是对于一些其他的正则任务， 
+	// 你需要通过 Compile 得到一个优化过的 Regexp 结构体。
+	r, _ := regexp.Compile("p([a-z]+)ch")
+
+	// 该结构体有很多方法。这是一个类似于我们前面看到的匹配测试。
+	fmt.Println(r.MatchString("peach"))
+
+	// 查找匹配的字符串。
+	fmt.Println(r.FindString("peach punch"))
+
+	// 这个也是查找首次匹配的字符串， 但是它的返回值是，
+	// 匹配开始和结束位置的索引，而不是匹配的内容。
+	fmt.Println(r.FindStringIndex("peach punch")) // [0 5]
+
+	// Submatch 返回完全匹配和局部匹配的字符串。 
+	// 例如，这里会返回 p([a-z]+)ch 和 ([a-z]+) 的信息。
+	fmt.Println(r.FindStringSubmatch("peach punch"))
+
+	// 类似的，这个会返回完全匹配和局部匹配位置的索引。
+	fmt.Println(r.FindStringSubmatchIndex("peach punch"))
+
+	// 带 All 的这些函数返回全部的匹配项， 而不仅仅是首次匹配项。
+	// 例如查找匹配表达式全部的项。
+	fmt.Println(r.FindAllString("peach punch pinch", -1))
+
+	// All 同样可以对应到上面的所有函数。
+	fmt.Println(r.FindAllStringSubmatchIndex("peach punch pinch", -1))
+	
+	// 这些函数接收一个正整数作为第二个参数，来限制匹配次数。
+	fmt.Println(r.FindAllString("peach punch pinch", 2))
+
+	// 上面的例子中，我们使用了字符串作为参数， 并使用了 MatchString 之类的方法。 
+	// 我们也可以将 String 从函数命中去掉，并提供 []byte 的参数。
+	fmt.Println(r.Match([]byte("peach")))
+
+	// 创建正则表达式的全局变量时，可以使用 Compile 的变体 MustCompile 。 
+	// MustCompile 用 panic 代替返回一个错误 ，这样使用全局变量更加安全。
+	r = regexp.MustCompile("p([a-z]+)ch")
+	fmt.Println(r)
+
+	// regexp 包也可以用来将子字符串替换为为其它值。
+	fmt.Println(r.ReplaceAllString("a peach", "<fruit>"))
+
+	// Func 变体允许您使用给定的函数来转换匹配的文本。
+	in := []byte("a peach")
+	out := r.ReplaceAllFunc(in, bytes.ToUpper)
+	fmt.Println(string(out))
+}
+```
+
+PS D:\Coding-cf\Go\Go-algorithm\数据结构与算法之美\06_linkedlist> go run "d:\Coding-cf\Go\GoByExample\regular-expressions\regular-expressions.go"
+true
+true
+peach
+[0 5]
+[peach ea]
+[0 5 1 3]
+[peach punch pinch]
+[[0 5 1 3] [6 11 7 9] [12 17 13 15]]
+[peach punch]
+true
+p([a-z]+)ch
+a <fruit>
+a PEACH
+
+有关 Go 正则表达式的说明，请参考 [regexp 包文档](http://golang.org/pkg/regexp/)。
 
 ## 48-JSON
 
+Go 提供内建的 **JSON 编码解码（序列化反序列化）支持**， 包括内建及自定义类型与 JSON 数据之间的转化。
+
+```go
+package main
+
+import (
+	"encoding/json"
+	"fmt"
+	"os"
+)
+
+// 下面我们将使用这两个结构体来演示自定义类型的编码和解码。
+type response1 struct {
+	Page   int
+	Fruits []string
+}
+
+// 只有 可导出 的字段才会被 JSON 编码/解码。
+// 必须以大写字母开头的字段才是可导出的。
+type response2 struct {
+	Page   int      `json:"page"`
+	Fruits []string `json:"fruits"`
+}
+
+// 首先我们来看一下基本数据类型到 JSON 字符串的编码过程。
+// 这是一些原子值的例子。
+func main() {
+	bolB, _ := json.Marshal(true)
+	fmt.Println(string(bolB))
+
+	intB, _ := json.Marshal(1)
+	fmt.Println(string(intB))
+
+	fltB, _ := json.Marshal(2.34)
+	fmt.Println(string(fltB))
+
+	strB, _ := json.Marshal("gopher")
+	fmt.Println(string(strB))
+
+	// 这是一些切片和 map 编码成 JSON 数组和对象的例子。
+	slcD := []string{"apple", "peach", "pear"}
+	slcB, _ := json.Marshal(slcD)
+	fmt.Println(string(slcB))
+
+	mapD := map[string]int{"apple": 5, "lettuce": 7}
+	mapB, _ := json.Marshal(mapD)
+	fmt.Println(string(mapB))
+
+	// JSON 包可以自动的编码你的自定义类型。
+	// 编码的输出只包含可导出的字段，
+	// 并且默认使用字段名作为 JSON 数据的键名。
+	res1D := &response1{
+		Page:   1,
+		Fruits: []string{"apple", "peach", "pear"},
+	}
+	res1B, _ := json.Marshal(res1D)
+	fmt.Println(string(res1B))
+
+	// 你可以给结构字段声明标签来自定义编码的 JSON 数据的键名。
+	// 上面 Response2 的定义，就是这种标签的一个例子。
+	res2D := &response2{
+		Page:   1,
+		Fruits: []string{"apple", "peach", "pear"},
+	}
+	res2B, _ := json.Marshal(res2D)
+	fmt.Println(string(res2B))
+	// fmt.Println(res2B)
+	// fmt.Printf("%+v", res2D)
+
+	// 现在来看看将 JSON 数据解码为 Go 值的过程。
+	// 这是一个普通数据结构的解码例子。
+	byt := []byte(`{"num": 6.13, "strs":["a", "b"]}`)
+
+	// 我们需要提供一个 JSON 包可以存放解码数据的变量。
+	// 这里的 map[string]interface{} 是一个键为 string，
+	// 值为任意值的 map。
+	var dat map[string]interface{}
+
+	// 这是实际的解码，以及相关错误的检查。
+	if err := json.Unmarshal(byt, &dat); err != nil {
+		panic(err)
+	}
+	fmt.Println(dat)
+
+	// 为了使用解码 map 中的值，我们需要将他们进行适当的类型转换。
+	// 例如，这里我们将 num 的值转换成 float64 类型。
+	num := dat["num"].(float64)
+	fmt.Println(num)
+
+	// 访问嵌套的值需要一系列的转化。
+	strs := dat["strs"].([]interface{})
+	str1 := strs[0].(string)
+	fmt.Println(str1)
+
+	// 我们还可以将 JSON 解码为自定义数据类型。
+	// 这样做的好处是，可以为我们的程序增加附加的类型安全性，
+	// 并在访问解码后的数据时不需要类型断言。
+	str := `{"page": 1, "fruits": ["apple", "peach"]}`
+	res := response2{}
+	json.Unmarshal([]byte(str), &res)
+	fmt.Println(res)
+	fmt.Println(res.Fruits[0])
+
+	// 在上面例子的标准输出上，
+	// 我们总是使用 byte和 string 作为数据和 JSON 表示形式之间的中介。
+	// 当然，我们也可以像 os.Stdout 一样直接将 JSON 编码流
+	// 传输到 os.Writer 甚至 HTTP 响应体。
+	enc := json.NewEncoder(os.Stdout)
+	d := map[string]int{"apple": 5, "lettuce": 7}
+	enc.Encode(d)
+}
+```
+
+PS D:\Coding-cf\Go\Go-algorithm\数据结构与算法之美\06_linkedlist> go run "d:\Coding-cf\Go\GoByExample\json\json.go"
+true
+1
+2.34
+"gopher"
+["apple","peach","pear"]
+{"apple":5,"lettuce":7}
+{"Page":1,"Fruits":["apple","peach","pear"]}
+{"page":1,"fruits":["apple","peach","pear"]}
+map[num:6.13 strs:[a b]]
+6.13
+a
+{1 [apple peach]}
+apple
+{"apple":5,"lettuce":7}
+
+至此，我们已经学习了基本的 Go JSON 知识，如果想要获取更多的信息， 请查阅 [JSON and Go](http://blog.golang.org/2011/01/json-and-go.html) 博文 和 [JSON package docs](http://golang.org/pkg/encoding/json/)。
+
 ## 49-XML
+
+Go 通过 `encoding.xml` 包为 XML 和 类-XML 格式提供了内建支持。
+
+```go
+package main
+
+import (
+	"encoding/xml"
+	"fmt"
+)
+
+// Plant 结构将被映射到 XML 。 与 JSON 示例类似，
+// 字段标签包含用于编码器和解码器的指令。
+// 这里我们使用了 XML 包的一些特性：
+// XMLName 字段名称规定了该结构的 XML 元素名称；
+// id,attrr 表示 Id 字段是一个 XML 属性，而不是嵌套元素。
+type Plant struct {
+	XMLName xml.Name `xml:"plant"`
+	Id      int      `xml:"id.attr"`
+	Name    string   `xml:"name"`
+	Origin  []string `xml:"origin"`
+}
+
+func (p Plant) String() string {
+	return fmt.Sprintf("Plant id=%v, name=%v, origin=%v",
+		p.Id, p.Name, p.Origin)
+}
+
+func main() {
+	coffee := &Plant{Id: 27, Name: "coffee"}
+	coffee.Origin = []string{"Ethiopia", "Brazil"}
+
+	// 传入我们声明了 XML 的 Plant 类型。 
+	// 使用 MarshalIndent 生成可读性更好的输出结果。
+	out, _ := xml.MarshalIndent(coffee, " ", " ")
+	fmt.Println(string(out))
+
+	// 明确的为输出结果添加一个通用的 XML 头部信息。
+	fmt.Println(xml.Header + string(out))
+
+	// 使用 Unmarshal 将 XML 格式字节流解析到 Plant 结构。 
+	// 如果 XML 格式错误或无法映射到 Plant 结构，将返回一个描述性错误。
+	var p Plant
+	if err := xml.Unmarshal(out, &p); err != nil {
+		panic(err)
+	}
+	fmt.Println(p)
+
+	tomato := &Plant{Id: 81, Name: "Tomato"}
+	tomato.Origin = []string{"mexico", "California"}
+
+	// parent>child>plant 字段标签告诉编码器，
+	// 将 Plants 中的元素嵌套在 <parent><child> 里面。
+	type Nesting struct {
+		XMLName xml.Name `xml:"nesting"`
+		Plants []*Plant `xml:"parent>child>plant"`
+	}
+
+	nesting := &Nesting{}
+	nesting.Plants = []*Plant{coffee, tomato}
+
+	out, _ = xml.MarshalIndent(nesting, " ", " ")
+	fmt.Println(string(out))
+
+}
+```
+
+PS D:\Coding-cf\Go\Go-algorithm\数据结构与算法之美\06_linkedlist> go run "d:\Coding-cf\Go\GoByExample\xml\xml.go"
+ <plant>
+  <id.attr>27</id.attr>
+  <name>coffee</name>
+  <origin>Ethiopia</origin>
+  <origin>Brazil</origin>
+ </plant>
+<?xml version="1.0" encoding="UTF-8"?>
+ <plant>
+  <id.attr>27</id.attr>
+  <name>coffee</name>
+  <origin>Ethiopia</origin>
+  <origin>Brazil</origin>
+ </plant>
+Plant id=27, name=coffee, origin=[Ethiopia Brazil]
+ <nesting>
+  <parent>
+   <child>
+    <plant>
+     <id.attr>27</id.attr>
+     <name>coffee</name>
+     <origin>Ethiopia</origin>
+     <origin>Brazil</origin>
+    </plant>
+    <plant>
+     <id.attr>81</id.attr>
+     <name>Tomato</name>
+     <origin>mexico</origin>
+     <origin>California</origin>
+    </plant>
+   </child>
+  </parent>
+ </nesting>
 
 ## 50-时间
 
+Go 为时间（time）和时间段（duration）提供了大量的支持；这儿有一些例子。
+
+```go
+package main
+
+import (
+	"fmt"
+	"time"
+)
+
+func main() {
+	p := fmt.Println
+
+	// 从获取当前时间时间开始。
+	now := time.Now()
+	p(now)
+
+	// 通过提供年月日等信息，你可以构建一个 time。 
+	// 时间总是与 Location 有关，也就是时区。
+	then := time.Date(
+		2009, 11, 17, 20, 34, 58, 651387237, time.UTC)
+	p(then)
+
+	// 你可以提取出时间的各个组成部分。
+	p(then.Year())
+	p(then.Month())
+	p(then.Day())
+	p(then.Hour())
+	p(then.Minute())
+	p(then.Second())
+	p(then.Nanosecond())
+	p(then.Location())
+
+	// 支持通过 Weekday 输出星期一到星期日。
+	p(then.Weekday())
+
+	// 这些方法用来比较两个时间，
+	// 分别测试一下是否为之前、之后或者是同一时刻，精确到秒。
+	p(then.Before(now))
+	p(then.After(now))
+	p(then.Equal(now))
+
+	// 方法 Sub 返回一个 Duration 来表示两个时间点的间隔时间。
+	diff := now.Sub(then)
+	p(diff)
+
+	// 我们可以用各种单位来表示时间段的长度。
+	p(diff.Hours())
+	p(diff.Minutes())
+	p(diff.Seconds())
+	p(diff.Nanoseconds())
+
+	// 你可以使用 Add 将时间后移一个时间段，
+	// 或者使用一个 - 来将时间前移一个时间段。
+	p(then.Add(diff))
+	p(then.Add(-diff))
+}
+```
+
+PS D:\Coding-cf\Go\Go-algorithm\数据结构与算法之美\06_linkedlist> go run "d:\Coding-cf\Go\GoByExample\time\time.go"
+2021-12-13 16:04:13.1625301 +0800 CST m=+0.008733101
+2009-11-17 20:34:58.651387237 +0000 UTC
+2009
+November
+17
+20
+34
+58
+651387237
+UTC
+Tuesday
+true
+false
+false
+105803h29m14.511142863s
+105803.48736420635
+6.348209241852381e+06
+3.8089255451114285e+08
+380892554511142863
+2021-12-13 08:04:13.1625301 +0000 UTC
+1997-10-23 09:05:44.140244374 +0000 UTC
+
 ## 51-时间戳
+
+接下来，我们将研究与 Unix 纪元相关的概念。
+
+一般程序会有获取 [Unix 时间](http://zh.wikipedia.org/wiki/UNIX%E6%97%B6%E9%97%B4) 的秒数，毫秒数，或者微秒数的需求。来看看如何用 Go 来实现。
+
+```go
+package main
+
+import (
+	"fmt"
+	"time"
+)
+
+func main() {
+
+	// 分别使用 time.Now 的 Unix 和 UnixNano， 
+	// 来获取从 Unix 纪元起，到现在经过的秒数和纳秒数。
+	now := time.Now()
+	secs := now.Unix()
+	nanos := now.UnixNano()
+	fmt.Println(now)
+
+	// 注意 UnixMillis 是不存在的，
+	// 所以要得到毫秒数的话， 你需要手动的从纳秒转化一下。
+	millis := nanos / 1000000
+	fmt.Println(secs)
+	fmt.Println(millis)
+	fmt.Println(nanos)
+
+	// 你也可以将 Unix 纪元起的整数秒或者纳秒转化到相应的时间。
+	fmt.Println(time.Unix(secs, 0))
+	fmt.Println(time.Unix(0, nanos))
+}
+```
+
+PS D:\Coding-cf\Go\Go-algorithm\数据结构与算法之美\06_linkedlist> go run "d:\Coding-cf\Go\GoByExample\epoch\epoch.go"
+2021-12-13 16:10:53.8933231 +0800 CST m=+0.007848001
+1639383053
+1639383053893
+1639383053893323100
+2021-12-13 16:10:53 +0800 CST
+2021-12-13 16:10:53.8933231 +0800 CST
 
 ## 52-时间的格式化和解析
 
+下面我们将看看另一个时间相关的任务：时间解析与格式化。
+
+Go 支持通过**基于描述模板的时间**格式化与解析。
+
+```go
+package main
+
+import (
+	"fmt"
+	"time"
+)
+
+func main() {
+
+	p := fmt.Println
+
+	// 这是一个遵循 RFC3339，
+	// 并使用对应的 布局（layout）常量进行格式化的基本例子。
+	t := time.Now()
+	p(t.Format(time.RFC3339))
+
+	// 时间解析使用与 Format 相同的布局值。
+	t1, e := time.Parse(
+		time.RFC3339,
+		"2012-11-01T22:08:41+00:00")
+	p(t1)
+	p(e)
+
+	// Format 和 Parse 使用基于例子的布局来决定日期格式，
+	// 一般你只要使用 time 包中提供的布局常量就行了，
+	// 但是你也可以实现自定义布局。
+	// 布局时间必须使用 Mon Jan 2 15:04:05 MST 2006 的格式，
+	// 来指定 格式化/解析给定时间/字符串 的布局。
+	// 时间一定要遵循：2006 为年，15 为小时，Monday 代表星期几等规则。
+	p(t.Format("3:04PM"))
+	p(t.Format("Mon Jan _2 15:04:05 2006"))
+	p(t.Format("2006-01-02T15:04:05.999999-07:00"))
+	form := "3 04 PM"
+	t2, e := time.Parse(form, "8 41 PM")
+	p(t2)
+
+	// 对于纯数字表示的时间（时间戳），
+	// 您还可以将标准字符串格式与提取时间值的一部分一起使用。
+	fmt.Printf("%d-%02d-%02dT%02d:%02d:%02d-00:00\n",
+		t.Year(), t.Month(), t.Day(),
+		t.Hour(), t.Minute(), t.Second())
+	
+	// 当输入的时间格式不正确时，Parse 会返回一个解析错误。
+	ansic := "Mon Jan _2 15:04:05 2006"
+	_, e = time.Parse(ansic, "8:41PM")
+	p(e)
+}
+```
+
+PS D:\Coding-cf\Go\Go-algorithm\数据结构与算法之美\06_linkedlist> go run "d:\Coding-cf\Go\GoByExample\time-formatting-parsing\time-formatting-parsing.go"
+2021-12-13T16:26:19+08:00
+2012-11-01 22:08:41 +0000 +0000
+<nil>
+4:26PM
+Mon Dec 13 16:26:19 2021
+2021-12-13T16:26:19.58813+08:00
+0000-01-01 20:41:00 +0000 UTC
+2021-12-13T16:26:19-00:00
+parsing time "8:41PM" as "Mon Jan _2 15:04:05 2006": cannot parse "8:41PM" as "Mon"
+
+
 ## 53-随机数
+
+Go 的 math/rand 包提供了[伪随机数](http://en.wikipedia.org/wiki/Pseudorandom_number_generator)生成器。
+
+```go
+package main
+
+import (
+	"fmt"
+	"math/rand"
+	"time"
+)
+
+func main() {
+	// 例如，rand.Intn 返回一个随机的整数 n，且 0 <= n < 100。
+	fmt.Print(rand.Intn(100), ",")
+	fmt.Print(rand.Intn(100))
+	fmt.Println()
+
+	// rand.Float64 返回一个64位浮点数 f，且 0.0 <= f < 1.0。
+	fmt.Println(rand.Float64())
+
+	// 这个技巧可以用来生成其他范围的随机浮点数， 例如，5.0 <= f < 10.0
+	fmt.Print((rand.Float64()*5)+5, ",")
+	fmt.Print((rand.Float64() * 5) + 5)
+	fmt.Println()
+
+	// 默认情况下，给定的种子是确定的，每次都会产生相同的随机数数字序列。 
+	// 要产生不同的数字序列，需要给定一个不同的种子。 
+	// 注意，对于想要加密的随机数，使用此方法并不安全， 
+	// 应该使用 crypto/rand。
+	s1 := rand.NewSource(time.Now().UnixNano())
+	r1 := rand.New(s1)
+
+	// 调用上面返回的 rand.Rand，就像调用 rand 包中函数一样。
+	fmt.Print(r1.Intn(100), ",")
+	fmt.Print(r1.Intn(100))
+	fmt.Println()
+
+	// 如果使用相同种子生成的随机数生成器，会生成相同的随机数序列。
+	s2 := rand.NewSource(42)
+	r2 := rand.New(s2)
+	fmt.Print(r2.Intn(100), ",")
+	fmt.Print(r2.Intn(100))
+	fmt.Println()
+
+	s3 := rand.NewSource(42)
+	r3 := rand.New(s3)
+	fmt.Print(r3.Intn(100), ",")
+	fmt.Print(r3.Intn(100))
+}
+```
+
+PS D:\Coding-cf> go run "d:\Coding-cf\Go\GoByExample\random-numbers\random-numbers.go" 
+81,87
+0.6645600532184904
+7.1885709359349015,7.123187485356329
+56,60
+5,87
+5,87
+
+有关 Go 提供的其他随机数的信息， 请参阅 [math/rand ](http://golang.org/pkg/math/rand/)包文档。
 
 ## 54-数字解析
 
@@ -2511,5 +3503,4 @@ Sorted:  true
 ## 73-信号
 
 ## 74-退出
-
 
