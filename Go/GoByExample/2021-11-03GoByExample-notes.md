@@ -11,7 +11,7 @@
 - [x] 2021-11-25 22~26
 - [x] 2021-11-26 27~40 有一些没有完全消化，需要对照相应资料深入理解和思考
 - [x] 2021-12-13 41~53
-- [ ] 
+- [x] 2021-12-14 54~60 
 
 ## Readme
 
@@ -745,17 +745,12 @@ PS C:\Users\chenfengyuan\Coding-cf> go run "c:\Users\chenfengyuan\Coding-cf\Go\G
 
 **可变参数函数**。 在调用时可以传递任意数量的参数。 例如，`fmt.Println` 就是一个常见的变参函数。
 
-这个函数接受任意数量的 `int` 作为参数。
-
-变参函数使用常规的调用方式，传入独立的参数。
-
-如果你有一个含有多个值的 `slice`，想把它们作为参数使用， 你需要这样调用 `func(slice...)`。
-
 ```go
 package main
 
 import "fmt"
 
+//这个函数接受任意数量的 `int` 作为参数。
 func sum(nums ...int) {
 	fmt.Print(nums, " ")
 	total := 0
@@ -766,9 +761,11 @@ func sum(nums ...int) {
 }
 
 func main() {
+    // 变参函数使用常规的调用方式，传入独立的参数。
 	sum(1, 2)
 	sum(1, 2, 3)
 
+    //如果你有一个含有多个值的 `slice`，想把它们作为参数使用， 你需要这样调用 `func(slice...)`。
 	nums := []int{1, 2, 3, 4}
 	sum(nums...)
 }
@@ -1007,20 +1004,6 @@ perim:  30
 
 **方法签名的集合**叫做：_接口(Interfaces)_。
 
-这是一个几何体的基本接口。
-
-在这个例子中，我们将为 `rect` 和 `circle` 实现该接口。
-
-**要在 Go 中实现一个接口，我们只需要实现接口中的所有方法。** 这里我们为 `rect` 实现了 `geometry` 接口。
-
-`circle` 的实现。
-
-如果一个变量实现了某个接口，我们就可以调用指定接口中的方法。 这儿有一个通用的 `measure` 函数，我们可以通过它来使用所有的 `geometry`。
-
-结构体类型 `circle` 和 `rect` 都实现了 `geometry` 接口， 所以我们可以将其实例作为 `measure` 的参数。
-
-要学习更多关于 Go 接口的知识， 可以看看这篇[很棒的博文](http://jordanorelli.tumblr.com/post/32665860244/how-to-use-interfaces-in-go)。
-
 ```go
 package main
 
@@ -1029,11 +1012,13 @@ import (
 	"math"
 )
 
+// 这是一个几何体的基本接口。
 type geometry interface {
-	area() float64
-	perim() float64
+	area() float64 // 接口中的方法1
+	perim() float64 // 接口中的方法2
 }
 
+// 在这个例子中，我们将为 `rect` 和 `circle` 实现该接口。
 type rect struct {
 	width, height float64
 }
@@ -1042,6 +1027,8 @@ type circle struct {
 	radius float64
 }
 
+// **要在 Go 中实现一个接口，我们只需要实现接口中的所有方法。** 
+// 这里我们为 `rect` 实现了 `geometry` 接口。
 func (r rect) area() float64 {
 	return r.width * r.height
 }
@@ -1050,6 +1037,7 @@ func (r rect) perim() float64 {
 	return 2*r.width + 2*r.height
 }
 
+// `circle` 的实现。
 func (c circle) area() float64 {
 	return math.Pi * c.radius * c.radius
 }
@@ -1058,7 +1046,10 @@ func (c circle) perim() float64 {
 	return 2 * math.Pi * c.radius
 }
 
+// 如果一个变量实现了某个接口，我们就可以调用指定接口中的方法。 
+// 这儿有一个通用的 `measure` 函数，我们可以通过它来使用所有的 `geometry`。
 func measure(g geometry) {
+    // measure函数中使用geometry的接口
 	fmt.Println(g)
 	fmt.Println(g.area())
 	fmt.Println(g.perim())
@@ -1068,6 +1059,8 @@ func main() {
 	r := rect{width: 3, height: 4}
 	c := circle{radius: 5}
 
+    // 结构体类型 circle 和 rect 都实现了 geometry 接口，
+    // 所以我们可以将其实例作为 measure 的参数。
 	measure(r)
 	measure(c)
 }
@@ -1080,6 +1073,8 @@ PS C:\Users\chenfengyuan\Coding-cf> go run "c:\Users\chenfengyuan\Coding-cf\Go\G
 {5}
 78.53981633974483
 31.41592653589793
+
+要学习更多关于 Go 接口的知识， 可以看看这篇[很棒的博文](http://jordanorelli.tumblr.com/post/32665860244/how-to-use-interfaces-in-go)。
 
 ## 21-错误处理 反复思考🤔
 
@@ -3464,17 +3459,439 @@ PS D:\Coding-cf> go run "d:\Coding-cf\Go\GoByExample\random-numbers\random-numbe
 
 ## 54-数字解析
 
+从字符串中解析数字在很多程序中是一个基础常见的任务， 而在 Go 中，是这样处理的。
+
+```go
+package main
+
+// 内建的 strconv 包提供了数字解析能力。
+import(
+	"fmt"
+	"strconv"
+)
+
+func main() {
+
+	// 使用 ParseFloat，这里的 64 表示解析的数的位数。
+	f, _ := strconv.ParseFloat("1.234", 64)
+	fmt.Println(f)
+
+	// 在使用 ParseInt 解析整型数时， 
+	// 例子中的参数 0 表示自动推断字符串所表示的数字的进制。 
+	// 64 表示返回的整型数是以 64 位存储的。
+	i, _ := strconv.ParseInt("123", 0, 64)
+	fmt.Println(i)
+
+	// ParseInt 会自动识别出字符串是十六进制数。
+	d, _ := strconv.ParseInt("0x1c8", 0, 64)
+	fmt.Println(d)
+
+	// ParseUint 也是可用的。
+	u, _ := strconv.ParseUint("789", 0, 64)
+	fmt.Println(u)
+
+	// Atoi 是一个基础的 10 进制整型数转换函数。
+	k, _ := strconv.Atoi("135")
+	fmt.Println(k)
+
+	// 在输入错误时，解析函数会返回一个错误。
+	_, e := strconv.Atoi("wat")
+	fmt.Println(e)
+}
+```
+
+PS D:\Coding-cf> go run "d:\Coding-cf\Go\GoByExample\number-parsing\number-parsing.go" 
+1.234
+123
+456
+789
+135
+strconv.Atoi: parsing "wat": invalid syntax
+
 ## 55-URL解析
+
+下面我们将了解一下另一个常见的解析任务：URL 解析。
+
+URL 提供了[统一资源定位方式](http://adam.heroku.com/past/2010/3/30/urls_are_the_uniform_way_to_locate_resources/)。 这里展示了在 Go 中是如何解析 URL 的。
+
+```go
+package main
+
+import (
+	"fmt"
+	"net"
+	"net/url"
+)
+
+func main() {
+
+	// 我们将解析这个 URL 示例，它包含了一个 scheme、 
+	// 认证信息、主机名、端口、路径、查询参数以及查询片段。
+	s := "postgres://user:pass@host.com:5432/path?k=v#f"
+
+	// 解析这个 URL 并确保解析没有出错。
+	u, err := url.Parse(s)
+	if err != nil {
+		panic(err)
+	}
+
+	// 直接访问 scheme。
+	fmt.Println(u.Scheme)
+
+	// User 包含了所有的认证信息， 
+	// 这里调用 Username 和 Password 来获取单独的值。
+	fmt.Println(u.User)
+	fmt.Println(u.User.Username())
+	p, _ := u.User.Password()
+	fmt.Println(p)
+
+	// Host 包含主机名和端口号（如果存在）。
+	// 使用 SplitHostPort 提取它们。
+	fmt.Println(u.Host)
+	host, port, _ := net.SplitHostPort(u.Host)
+	fmt.Println(host)
+	fmt.Println(port)
+
+	// 这里我们提取路径和 # 后面的查询片段信息。
+	fmt.Println(u.Path)
+	fmt.Println(u.Fragment)
+
+	// 要得到字符串中的 k=v 这种格式的查询参数，可以使用 RawQuery 函数。 
+	// 你也可以将查询参数解析为一个 map。
+	// 已解析的查询参数 map 以查询字符串为键， 
+	// 已解析的查询参数会从字符串映射到到字符串的切片， 
+	// 因此如果您只想要第一个值，则索引为 [0]。
+	fmt.Println(u.RawQuery)
+	m, _ := url.ParseQuery(u.RawQuery)
+	fmt.Println(m)
+	fmt.Println(m["k"][0])
+}
+```
+
+运行我们的 URL 解析程序， 显示全部我们提取的 URL 的不同数据块。
+
+PS D:\Coding-cf> go run "d:\Coding-cf\Go\GoByExample\url-parsing\url-parsing.go"       
+postgres
+user:pass
+user
+pass
+host.com:5432
+host.com
+5432
+/path
+f
+k=v
+map[k:[v]]
+v
 
 ## 56-SHA1哈希
 
+[**SHA1 散列（hash）**](http://en.wikipedia.org/wiki/SHA-1) 经常用于生成二进制文件或者文本块的短标识。 例如，[git 版本控制系统](http://git-scm.com/) 大量的使用了 SHA1 来标识受版本控制的文件和目录。 这是 Go 中如何进行 SHA1 散列计算的例子。
+
+```go
+package main
+
+// Go 在多个 crypto/* 包中实现了一系列散列函数。
+import (
+	"crypto/sha1"
+	"fmt"
+)
+
+func main() {
+	s := "sha1 this string"
+
+	// 产生一个散列值的方式是 sha1.New()，sha1.Write(bytes)， 
+	// 然后 sha1.Sum([]byte{})。这里我们从一个新的散列开始。
+	h := sha1.New()
+
+	// 写入要处理的字节。
+	// 如果是一个字符串， 需要使用 []byte(s) 将其强制转换成字节数组。
+	h.Write([]byte(s))
+
+	// Sum 得到最终的散列值的字符切片。
+	// Sum 接收一个参数， 可以用来给现有的字符切片追加额外的字节切片：
+	// 但是一般都不需要这样做。
+	bs := h.Sum(nil)
+
+	// SHA1 值经常以 16 进制输出，例如在 git commit 中。 
+	// 我们这里也使用 %x 来将散列结果格式化为 16 进制字符串。
+	fmt.Println(s)
+	fmt.Printf("%x\n", bs)
+}
+```
+
+运行程序计算散列值，并以可读的 16 进制格式输出。
+
+PS D:\Coding-cf> go run "d:\Coding-cf\Go\GoByExample\sha1-hashes\sha1-hashes.go"       
+sha1 this string
+cf23df2207d99a74fbe169e3eba035e633b65d94
+
+你可以使用和上面相似的方式来计算其他形式的散列值。 *例如，计算 MD5 散列，引入 crypto/md5 并使用 md5.New() 方法。*
+
+注意，如果你需要密码学上的安全散列，你需要仔细的研究一下 [加密散列函数](http://en.wikipedia.org/wiki/Cryptographic_hash_function)。
+
 ## 57-Base64编码
+
+Go 提供了对 [base64 编解码](http://zh.wikipedia.org/wiki/Base64)的内建支持。
+
+```go
+package main
+
+// 这个语法引入了 encoding/base64 包， 
+// 并使用别名 b64 代替默认的 base64。这样可以节省点空间。
+import (
+	b64 "encoding/base64"
+	"fmt"
+)
+
+func main() {
+
+	// 这是要编解码的字符串。
+	data := "abc123!?$*&()'-=@~"
+
+	// Go 同时支持标准 base64 以及 URL 兼容 base64。 
+	// 这是使用标准编码器进行编码的方法。 
+	// 编码器需要一个 []byte，因此我们将 string 转换为该类型。
+	sEnc := b64.StdEncoding.EncodeToString([]byte(data))
+	fmt.Println(sEnc)
+
+	// 解码可能会返回错误，如果不确定输入信息格式是否正确， 
+	// 那么，你就需要进行错误检查了。
+	sDec, _ := b64.StdEncoding.DecodeString(sEnc)
+	fmt.Println(string(sDec))
+	fmt.Println()
+
+	// 使用 URL base64 格式进行编解码。
+	uEnc := b64.URLEncoding.EncodeToString([]byte(data))
+	fmt.Println(uEnc)
+	uDec, _ := b64.URLEncoding.DecodeString(uEnc)
+	fmt.Println(string(uDec))
+}
+```
+
+标准 base64 编码和 URL base64 编码的 编码字符串存在稍许不同（后缀为 + 和 -）， 但是两者都可以正确解码为原始字符串。
+
+PS D:\Coding-cf> go run "d:\Coding-cf\Go\GoByExample\base64-encoding\base64-encoding.go"
+YWJjMTIzIT8kKiYoKSctPUB+
+abc123!?$*&()'-=@~
+
+YWJjMTIzIT8kKiYoKSctPUB-
+abc123!?$*&()'-=@~
+
 
 ## 58-读文件
 
+读写文件在很多程序中都是必须的基本任务。 首先我们来看一些读文件的例子。
+
+```go
+package main
+
+import(
+	"bufio"
+	"fmt"
+	"io"
+	"io/ioutil"
+	"os"
+)
+
+// 读取文件需要经常进行错误检查， 这个帮助方法可以精简下面的错误检查过程。
+func check(e error) {
+	if e != nil {
+		panic(e)
+	}
+}
+
+func main() {
+
+	// 最基本的文件读取任务或许就是将文件内容读取到内存中。
+	dat, err := ioutil.ReadFile("/tmp/dat")
+	check(err)
+	fmt.Print(string(dat))
+
+	// 您通常会希望对文件的读取方式和内容进行更多控制。 
+	// 对于这个任务，首先使用 Open 打开一个文件，以获取一个 os.File 值。
+	f, err := os.Open("/tmp/dat")
+	check(err)
+
+	// 从文件的开始位置读取一些字节。 
+	// 最多允许读取 5 个字节，但还要注意实际读取了多少个。
+	b1 := make([]byte, 5)
+	n1, err := f.Read(b1)
+	check(err)
+	fmt.Printf("%d bytes: %s\n", n1, string(b1[:n1]))
+
+	// 你也可以 Seek 到一个文件中已知的位置，并从这个位置开始读取。
+	o2, err := f.Seek(6, 0)
+	check(err)
+	b2 := make([]byte, 2)
+	n2, err := f.Read(b2)
+	check(err)
+	fmt.Printf("%d bytes @ %d: ", n2, o2)
+	fmt.Printf("%v\n", string(b2[:n2]))
+
+	// 例如，io 包提供了一个更健壮的实现 ReadAtLeast，用于读取上面那种文件。
+	o3, err := f.Seek(6, 0)
+	check(err)
+	b3 := make([]byte, 2)
+	n3, err := io.ReadAtLeast(f, b3, 2)
+	check(err)
+	fmt.Printf("%d bytes @ %d: %s\n", n3, o3, string(b3))
+
+	// 没有内建的倒带，但是 Seek(0, 0) 实现了这一功能。
+	_, err = f.Seek(0, 0)
+	check(err)
+
+	// bufio 包实现了一个缓冲读取器，
+	// 这可能有助于提高许多小读操作的效率，以及它提供了很多附加的读取函数。
+	r4 := bufio.NewReader(f)
+	b4, err := r4.Peek(5)
+	check(err)
+	fmt.Printf("5 bytes: %s\n", string(b4))
+
+	// 任务结束后要关闭这个文件 
+	// （通常这个操作应该在 Open 操作后立即使用 defer 来完成）。
+	f.Close()
+}
+```
+PS D:\Coding-cf\Go\GoByExample\reading-files> echo "hello" > /tmp/dat
+PS D:\Coding-cf\Go\GoByExample\reading-files> echo "go" >> /tmp/dat
+PS D:\Coding-cf\Go\GoByExample\reading-files> go run "d:\Coding-cf\Go\GoByExample\reading-files\reading-files.go"
+��hello
+go
+5 bytes: ��he
+2 bytes @ 6: l
+2 bytes @ 6: l
+5 bytes: ��he
+
 ## 59-写文件
 
+下面我们来看一下写入文件。
+在 Go 中，写文件与我们前面看过的读文件方法类似。
+
+```go
+package main
+
+import (
+	"bufio"
+	"fmt"
+	"io/ioutil"
+	"os"
+)
+
+func check(e error) {
+	if e != nil {
+		panic(e)
+	}
+}
+
+func main() {
+
+	// 开始！这里展示了如何写入一个字符串（或者只是一些字节）到一个文件。
+	d1 := []byte("hello\ngo\n")
+	err := ioutil.WriteFile("/tmp/dat1", d1, 0644)
+	check(err)
+
+	// 对于更细粒度的写入，先打开一个文件。
+	f, err := os.Create("/tmp/dat2")
+	check(err)
+
+	// 打开文件后，一个习惯性的操作是：立即使用 defer 调用文件的 Close。
+	defer f.Close()
+
+	// 您可以按期望的那样 Write 字节切片。
+	d2 := []byte{115, 111, 109, 101, 10}
+	n2, err := f.Write(d2)
+	check(err)
+	fmt.Printf("wrote %d bytes\n", n2)
+
+	// WriteString 也是可用的。
+	n3, err := f.WriteString("writes\n")
+	fmt.Printf("wrote %d bytes\n", n3)
+
+	// 调用 Sync 将缓冲区的数据写入硬盘。
+	f.Sync()
+
+	// 与我们前面看到的带缓冲的 Reader 一样，
+	// bufio 还提供了的带缓冲的 Writer。
+	w := bufio.NewWriter(f)
+	n4, err := w.WriteString("buffered\n")
+	fmt.Printf("wrote %d bytes\n", n4)
+
+	// 使用 Flush 来确保，已将所有的缓冲操作应用于底层 writer。
+	w.Flush()
+}
+```
+
+运行这段文件写入代码。
+
+PS D:\Coding-cf\Go\GoByExample\reading-files> go run "d:\Coding-cf\Go\GoByExample\writing-files\writing-files.go"
+wrote 5 bytes
+wrote 7 bytes
+wrote 9 bytes
+
+然后检查写入文件的内容。
+
+PS D:\Coding-cf\Go\GoByExample\reading-files> cat /tmp/dat1
+hello
+go
+PS D:\Coding-cf\Go\GoByExample\reading-files> cat /tmp/dat2
+some
+writes
+buffered
+
 ## 60-行过滤器
+
+我们刚刚看到了文件 I/O 思想， 接下来，我们看看它在 stdin 和 stdout 流中的应用。
+
+**行过滤器（line filter）** 是一种常见的程序类型， 它读取 stdin 上的输入，对其进行处理，然后将处理结果打印到 stdout。 grep 和 sed 就是常见的行过滤器。
+
+这里是一个使用 Go 编写的行过滤器示例，*它将所有的输入文字转化为大写的版本。* 你可以使用这个模式来写一个你自己的 Go 行过滤器。
+
+```go
+package main
+
+import (
+	"bufio"
+	"fmt"
+	"os"
+	"strings"
+)
+
+func main() {
+
+	// 用带缓冲的 scanner 包装无缓冲的 os.Stdin， 
+	// 这为我们提供了一种方便的 Scan 方法， 
+	// 将 scanner 前进到下一个 令牌（默认为：下一行）。
+	scanner := bufio.NewScanner(os.Stdin)
+
+	for scanner.Scan() {
+
+		// Text 返回当前的 token，这里指的是输入的下一行。
+		ucl := strings.ToUpper((scanner.Text()))
+
+		// 输出转换为大写后的行。
+		fmt.Println(ucl)
+	}
+
+	// 检查 Scan 的错误。 
+	// 文件结束符（EOF）是可以接受的，它不会被 Scan 当作一个错误。
+	if err := scanner.Err(); err != nil {
+		fmt.Fprintln(os.Stderr, "error:", err)
+		os.Exit(1)
+	}
+}
+```
+
+试一下我们的行过滤器，首先创建一个有小写行的文件。
+
+PS D:\Coding-cf\Go\GoByExample\reading-files> echo 'hello' > /tmp/lines
+PS D:\Coding-cf\Go\GoByExample\reading-files> echo 'filter' >> /tmp/lines
+
+然后使用行过滤器来得到大写的行。
+
+PS D:\Coding-cf\Go\GoByExample\line-filters> cat /tmp/lines | go run line-filters.go   
+HELLO
+FILTER
 
 ## 61-文件路径
 
