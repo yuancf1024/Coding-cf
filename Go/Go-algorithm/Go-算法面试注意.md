@@ -159,6 +159,7 @@ func main() {
 |计数排序|	O(n+k)|	O(n+k)|	O(n+k)|	O(n+k)|	稳定
 |基数排序|	O(N\*M) |	O(N\*M)|	O(N\*M)|	O(M)|	稳定
 
-Reference：
+## Reference
+
 1. https://leetcode.coding3min.com/leetcode/suan-fa-mian-shi-zhu-yi/
 2. 
